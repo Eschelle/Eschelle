@@ -1,0 +1,70 @@
+#ifndef ESCHELLE_ARRAY_H
+#define ESCHELLE_ARRAY_H
+
+#include <cstdlib>
+#include "common.h"
+
+namespace Eschelle{
+    template<typename T>
+    class Array{
+    public:
+        Array(word initialCap):
+                length_(0),
+                capacity_(0),
+                data_(nullptr){
+            if(initialCap > 0){
+                capacity_ = RoundUpPowTwo(initialCap);
+                data_ = reinterpret_cast<T*>(malloc(capacity_ * sizeof(T)));
+            }
+        }
+        ~Array(){
+            free(data_);
+        }
+
+        word Length(){
+            return length_;
+        }
+
+        T& operator[](word index) const{
+            return data_[index];
+        }
+
+        T& Last() const{
+            return operator[](length_ - 1);
+        }
+
+        void Add(const T& value){
+            Resize(Length() + 1);
+            Last() = value;
+        }
+    private:
+        word length_;
+        word capacity_;
+        T* data_;
+
+        void Resize(word newLen){
+            if(newLen > capacity_){
+                word newCap = RoundUpPowTwo(newLen);
+                T* newData = reinterpret_cast<T*>(realloc(data_, newLen * sizeof(T)));
+                data_ = newData;
+                capacity_ = newCap;
+            }
+            length_ = newLen;
+        }
+
+        static uword RoundUpPowTwo(uword x){
+            x = x - 1;
+            x = x | (x >> 1);
+            x = x | (x >> 2);
+            x = x | (x >> 4);
+            x = x | (x >> 8);
+            x = x | (x >> 16);
+#if defined(ARCH_IS_X64)
+            x = x | (x >> 32);
+#endif
+            return x + 1;
+        }
+    };
+}
+
+#endif //ESCHELLE_ARRAY_H
