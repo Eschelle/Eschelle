@@ -1,19 +1,14 @@
 #include <iostream>
-#include "object.h"
+#include "opcode.h"
 
 using namespace Eschelle;
 
 int
 main(int argc, char** argv){
-    Class* main = new Class("Main", kFinal);
+  Binary bin(1024);
+  bin.Append(kOpMov, 0xA, 0xB);
+  bin.Append(kOpNop, -1, -1);
+  bin.Append(kOpMov, 0xCC, 0xDD);
 
-    Field* pi = main->DefineField("pi", Class::DOUBLE);
-    Field* tau = main->DefineField("tau", Class::DOUBLE);
-    Field* test = main->DefineField("test", Class::BOOLEAN);
-
-    Instance* mainInstance = Instance::New(main);
-
-    std::cout << "Allocation Size: " << main->GetAllocationSize() << std::endl;
-    std::cout << "\tInstance: " << sizeof(Instance) << "\tFields: (" << main->GetFieldCount() << " * " << kWordSize << ")" << std::endl;
-    std::cout << "\tTotal: " << (sizeof(Instance) + main->GetAllocationSize()) << std::endl;
+  return 0x0;
 }
