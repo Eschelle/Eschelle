@@ -51,19 +51,6 @@ namespace Eschelle{
             }
             length_ = newLen;
         }
-
-        static uword RoundUpPowTwo(uword x){
-            x = x - 1;
-            x = x | (x >> 1);
-            x = x | (x >> 2);
-            x = x | (x >> 4);
-            x = x | (x >> 8);
-            x = x | (x >> 16);
-#if defined(ARCH_IS_X64)
-            x = x | (x >> 32);
-#endif
-            return x + 1;
-        }
     };
 }
 

@@ -79,9 +79,7 @@ namespace Eschelle{
             return name_;
         }
 
-        word GetAllocationSize(){
-            return fields_.Length() * kWordSize;
-        }
+        word GetAllocationSize();
 
         word GetFieldCount(){
             return fields_.Length();
@@ -180,6 +178,12 @@ namespace Eschelle{
         Instance* GetField(Field* field){
             return *FieldAddr(field);
         }
+
+        virtual std::string ToString(){
+            std::stringstream sstream;
+            sstream << "Instance[" + type_->ToString() << "]";
+            return sstream.str();
+        }
     };
 
     class String : public Instance{
@@ -195,9 +199,9 @@ namespace Eschelle{
         HAS_VALUE(String, std::string);
     };
 
-    class Boolean : public Instance{
+    class Bool : public Instance{
     private:
-        Boolean(bool value):
+        Bool(bool value):
                 value_(value),
                 Instance(Class::BOOLEAN){}
     public:
@@ -205,15 +209,15 @@ namespace Eschelle{
             return value_ ? "true" : "false";
         }
 
-        HAS_VALUE(Boolean, bool);
-
-        static Boolean* FALSE;
-        static Boolean* TRUE;
+        HAS_VALUE(Bool, bool);
+    public:
+        static Bool* FALSE;
+        static Bool* TRUE;
     };
 
-    class Integer : public Instance{
+    class Int : public Instance{
     public:
-        Integer(int value):
+        Int(int value):
                 value_(value),
                 Instance(Class::INTEGER){}
 
@@ -223,7 +227,7 @@ namespace Eschelle{
             return stream.str();
         }
 
-        HAS_VALUE(Integer, int);
+        HAS_VALUE(Int, int);
     };
 
     class Double : public Instance{

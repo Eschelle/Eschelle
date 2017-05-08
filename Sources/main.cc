@@ -1,19 +1,15 @@
-#include <iostream>
 #include "object.h"
+#include "alloc.h"
 
 using namespace Eschelle;
 
 int
 main(int argc, char** argv){
-    Class* main = new Class("Main", kFinal);
+    Class* cls = new Class("Test", kNone);
+    Field* isTest = cls->DefineField("isTest", Class::BOOLEAN);
 
-    Field* pi = main->DefineField("pi", Class::DOUBLE);
-    Field* tau = main->DefineField("tau", Class::DOUBLE);
-    Field* test = main->DefineField("test", Class::BOOLEAN);
+    Instance* i = Instance::New(cls);
+    i->SetField(isTest, Bool::TRUE);
 
-    Instance* mainInstance = Instance::New(main);
-
-    std::cout << "Allocation Size: " << main->GetAllocationSize() << std::endl;
-    std::cout << "\tInstance: " << sizeof(Instance) << "\tFields: (" << main->GetFieldCount() << " * " << kWordSize << ")" << std::endl;
-    std::cout << "\tTotal: " << (sizeof(Instance) + main->GetAllocationSize()) << std::endl;
+    Allocator::PrintHeap(kEden);
 }

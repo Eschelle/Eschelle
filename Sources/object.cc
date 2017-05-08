@@ -1,4 +1,5 @@
 #include "object.h"
+#include "alloc.h"
 
 namespace Eschelle{
     Field* Class::DefineField(std::string name, Class *type){
@@ -17,6 +18,17 @@ namespace Eschelle{
         return nullptr;
     }
 
+    word Class::GetAllocationSize(){
+        word offset = sizeof(Instance);
+        for(int i = 0; i < fields_.Length(); i++){
+            Field* f = fields_[i];
+            if(!f->IsStatic()){
+                offset += kWordSize;
+            }
+        }
+        return offset;
+    }
+
     Class* Class::OBJECT = new Class("Object", kNone, nullptr);
     Class* Class::STRING = new Class("String", kFinal, Class::OBJECT);
     Class* Class::BOOLEAN = new Class("Bool", kFinal, Class::OBJECT);
@@ -24,25 +36,16 @@ namespace Eschelle{
     Class* Class::DOUBLE = new Class("Double", kFinal, Class::OBJECT);
 
     Instance* Instance::New(Class *type){
-        word offset = sizeof(Instance);
+        void* ptr = Allocator::Alloc(type->GetAllocationSize());
 
-        for(int i = 0; i < type->fields_.Length(); i++){
-            Field* f = type->fields_[i];
-            if(!f->IsStatic()){
-                f->SetOffset(offset);
-                offset += kWordSize;
-            }
-        }
+        Instance* fake = new Instance(type);
+        Instance* instance = reinterpret_cast<Instance*>(ptr);
+        memcpy(instance, fake, sizeof(Instance));
+        delete fake;
 
-        std::cout << "Allocating " << offset << " bytes for " << type->GetName() << std::endl;
-
-        void* data = malloc(offset);
-        Instance* instance = reinterpret_cast<Instance*>(data);
-        instance->type_ = type;
-        memset(reinterpret_cast<char*>(data) + sizeof(Instance), 0, offset - sizeof(Instance));
         return instance;
     }
 
-    Boolean* Boolean::TRUE = new Boolean(true);
-    Boolean* Boolean::FALSE = new Boolean(false);
+    Bool* Bool::TRUE = new Bool(true);
+    Bool* Bool::FALSE = new Bool(false);
 }

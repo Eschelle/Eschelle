@@ -27,6 +27,23 @@ namespace Eschelle{
 #define ARCH_IS_ARM64 1
 #define kFpuRegisterSize 16
 #endif
+
+    static inline uword RoundUpPowTwo(uword x){
+        x = x - 1;
+        x = x | (x >> 1);
+        x = x | (x >> 2);
+        x = x | (x >> 4);
+        x = x | (x >> 8);
+        x = x | (x >> 16);
+#if defined(ARCH_IS_X64)
+        x = x | (x >> 32);
+#endif
+        return x + 1;
+    }
+
+#ifndef ESCH_DEBUG
+#define ESCH_DEBUG 1
+#endif // ESCH_DEBUG
 }
 
 #endif //ESCHELLE_COMMON_H
