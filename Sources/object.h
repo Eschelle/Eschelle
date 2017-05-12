@@ -85,6 +85,7 @@ namespace Eschelle{
             return fields_.Length();
         }
 
+        Field* DefineStaticField(std::string name, Class* type);
         Field* DefineField(std::string name, Class* type);
         Field* GetField(std::string name);
 
@@ -106,6 +107,8 @@ namespace Eschelle{
             word offset_;
             Instance* static_;
         };
+
+        friend class Parser;
     public:
         Field(std::string name, Class* owner, Class* type, int mods):
                 name_(name),
@@ -243,6 +246,22 @@ namespace Eschelle{
         }
 
         HAS_VALUE(Double, double);
+    };
+
+    class CodeUnit{
+    private:
+        std::string location_;
+        Array<Class*> classes_;
+
+        void AddClass(Class* cls){
+            classes_.Add(cls);
+        }
+
+        friend class Parser;
+    public:
+        CodeUnit(std::string loc):
+                classes_(10),
+                location_(loc){}
     };
 }
 

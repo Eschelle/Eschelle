@@ -1,7 +1,8 @@
 #ifndef ESCHELLE_COMMON_H
 #define ESCHELLE_COMMON_H
 
-#include <stdint.h>
+#include <cstdint>
+#include <cstddef>
 
 namespace Eschelle{
     typedef intptr_t word;

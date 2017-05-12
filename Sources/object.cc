@@ -8,6 +8,12 @@ namespace Eschelle{
         return f;
     }
 
+    Field* Class::DefineStaticField(std::string name, Class* type){
+        Field* f = new Field(name, this, type, kStatic);
+        fields_.Add(f);
+        return f;
+    }
+
     Field* Class::GetField(std::string name){
         for(int i = 0; i < fields_.Length(); i++){
             Field* f = fields_[i];
