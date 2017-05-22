@@ -2,6 +2,7 @@
 #define ESCHELLE_COMMON_H
 
 #include <cstdint>
+#include <cstring>
 #include <cstddef>
 
 namespace Eschelle{
@@ -45,6 +46,14 @@ namespace Eschelle{
 #ifndef ESCH_DEBUG
 #define ESCH_DEBUG 1
 #endif // ESCH_DEBUG
+
+#if defined(__linux__) || defined(__FreeBSD__)
+#define OS_IS_LINUX 1
+#elif defined(__APPLE__)
+#define OS_IS_OSX 1
+#elif defined(_WIN32)
+#define OS_IS_WINDOWS 1
+#endif
 }
 
 #endif //ESCHELLE_COMMON_H

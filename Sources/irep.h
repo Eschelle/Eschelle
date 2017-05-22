@@ -3,43 +3,92 @@
 
 #include "common.h"
 #include "array.h"
+#include "object.h"
 
 namespace Eschelle{
 #define FOR_EACH_INSTRUCTION(V) \
     V(GraphEntry) \
     V(TargetEntry) \
-    V(JoinEntry) \
-    V(ParallelMove) \
     V(Box) \
     V(Unbox) \
-    V(Phi) \
-    V(DropConstants) \
     V(Constant) \
     V(Return) \
-    V(StoreLocal) \
-    V(LoadLocal) \
-    V(NativeCall)
+    V(BinaryOp) \
 
-    enum Representation{
-        kUnboxedInt,
-        kBoxedInt,
+#define FOR_EACH_ABSTRACT_INSTRUCTION(V) \
+    V(BlockEntry)
 
-        kUnboxedDouble,
-        kBoxedDouble,
+#define FORWARD_DECLARE(Name) \
+    class Name##Instr;
+    FOR_EACH_INSTRUCTION(FORWARD_DECLARE)
+    FOR_EACH_ABSTRACT_INSTRUCTION(FORWARD_DECLARE)
+#undef FORWARD_DECLARE
 
-        kTagged,
-        kNone
+    class Instruction{
+    private:
+        Instruction* next_;
+        Instruction* prev_;
+    public:
+        Instruction():
+                next_(nullptr),
+                prev_(nullptr){}
+
+#define DECLARE_INSTRUCTION_TYPECHECK(Name) \
+        bool Is##Name(){ return As##Name() != nullptr; } \
+        virtual Name##Instr* As##Name(){ return nullptr; }
+    FOR_EACH_INSTRUCTION(DECLARE_INSTRUCTION_TYPECHECK)
+#undef DECLARE_INSTRUCTION_TYPECHECK
+    };
+
+    class BlockEntryInstr : public Instruction{
+    private:
+        word start_pos_;
+        word end_pos_;
+        Instruction* last_;
+    protected:
+        BlockEntryInstr():
+                start_pos_(0),
+                end_pos_(0),
+                last_(nullptr){}
+
+        void SetStartPos(word pos){
+            start_pos_ = pos;
+        }
+
+        word GetStartPos() const{
+            return start_pos_;
+        }
+
+        void SetEndPos(word pos){
+            end_pos_ = pos;
+        }
+
+        word GetEndPos() const{
+            return end_pos_;
+        }
+    };
+
+    class GraphEntryInstr : public BlockEntryInstr{
+    private:
+        Function* function_;
+    public:
+        GraphEntryInstr(Function* function):
+                function_(function){}
+    };
+
+    class TargetEntryInstr : public BlockEntryInstr{
+    public:
+        TargetEntryInstr(){}
     };
 
     class Definition;
 
     class Value{
     private:
-        Value* prev_;
-        Value* next_;
-        Instruction* instruction_;
-        Definition* definition_;
+        Definition* defn_;
         word use_index_;
+        Value* next_use_;
+        Value* previous_use_;
     public:
         class Iterator{
         private:
@@ -61,76 +110,41 @@ namespace Eschelle{
 
             void Advance(){
                 current_ = next_;
-                if(next_ != nullptr) next_ = next_->GetNext();
+                if(next_ != nullptr){
+                    next_ = next_->NextUse();
+                }
             }
         };
 
         Value(Definition* defn):
-                definition_(defn),
-                prev_(nullptr),
-                next_(nullptr),
-                instruction_(nullptr),
-                use_index_(nullptr){}
+                defn_(defn),
+                previous_use_(nullptr),
+                next_use_(nullptr),
+                use_index_(-1){}
 
-        Definition* GetDefinition() const{
-            return definition_;
+        Value* NextUse() const{
+            return next_use_;
+        }
+
+        void SetNextUse(Value* value){
+            next_use_ = value;
+        }
+
+        Value* PreviousUse() const{
+            return previous_use_;
+        }
+
+        void SetPreviousUse(Value* value){
+            previous_use_ = value;
         }
 
         word UseIndex() const{
             return use_index_;
         }
 
-        Value* GetNext() const{
-            return next_;
+        void SetUseIndex(word index){
+            use_index_ = index;
         }
-
-        void SetNext(Value* value){
-            next_ = value;
-        }
-
-        Value* GetPrevious() const{
-            return prev_;
-        }
-
-        void SetPrevious(Value* value){
-            prev_ = value;
-        }
-
-        static void AddToList(Value* value, Value** list){
-            Value* next = *list;
-            *list = value;
-            value->SetNext(next);
-            value->SetPrevious(nullptr);
-            if(next != nullptr) next->SetPrevious(value);
-        }
-    };
-
-    class Instruction{
-    private:
-        word lifetime_pos_;
-        Instruction* next_;
-        Instruction* prev_;
-    public:
-        Instruction():
-                lifetime_pos_(-1),
-                prev_(nullptr),
-                next_(nullptr){}
-        virtual ~Instruction(){}
-
-        virtual word InputCount() const = 0;
-        virtual Value* InputAt(word i) const = 0;
-    };
-
-    class BlockEntryInstr : public Instruction{
-    private:
-        word preorder_num_;
-        word postorder_num_;
-        word start_pos_;
-        word end_pos_;
-        word offset_;
-        Instruction* last_;
-        Array<BlockEntryInstr*> dominated_;
-        BlockEntryInstr* dominator_;
     };
 }
 
