@@ -6,6 +6,7 @@ namespace Eschelle{
 #define CONSUME \
     next = NextToken()
 #define UNEXPECTED ({ \
+    std::cerr << __LINE__ << std::endl; \
     std::cerr << "Unexpected: " << next->GetText() << "$" << next->GetKind() << std::endl; \
     getchar(); \
     abort(); \
@@ -14,7 +15,10 @@ namespace Eschelle{
     peek_ = next;
 #define EXPECT(Kind) ({ \
     if((next = NextToken())->GetKind() != Kind){ \
+        std::cerr << __LINE__ << std::endl; \
         std::cerr << "Unexpected: " << next->GetText() << "$" << next->GetKind() << std::endl; \
+        getchar(); \
+        abort(); \
     } \
 })
 
@@ -23,6 +27,9 @@ namespace Eschelle{
 
         Token* next;
         switch((CONSUME)->GetKind()){
+            case kLIT_NUMBER:{
+                return new LiteralNode(new Int(atoi(next->GetText().c_str())));
+            }
             default:{
                 UNEXPECTED;
             }
@@ -31,24 +38,21 @@ namespace Eschelle{
         return primary;
     }
 
-    static inline bool IsExpr(Token* tk){
-        switch(tk->GetKind()){
-            case kMINUS:
-            case kPLUS: return true;
-            default: return false;
-        }
-    }
-
     AstNode* Parser::ParseBinaryExpr(){
         AstNode* left = ParseUnaryExpr();
 
         Token* next;
-        while(IsExpr(CONSUME)){
-            // left = new BinaryOpNode(left, ParseBinaryExpr(), next->GetKind());
+        while(IsExpr((CONSUME)->GetKind())){
+            left = new BinaryOpNode(left, ParseBinaryExpr(), next->GetKind());
         }
 
         DECONSUME
         return left;
+    }
+
+    Token* Parser::PeekToken(){
+        peek_ = NextToken();
+        return peek_;
     }
 
     Token* Parser::NextToken(){
@@ -72,6 +76,8 @@ namespace Eschelle{
             case ':': return new Token(kCOLON, ":");
             case '(': return new Token(kLPAREN, "(");
             case ')': return new Token(kRPAREN, ")");
+            case '*': return new Token(kMULTIPLY, "*");
+            case '/': return new Token(kDIVIDE, "/");
             default: break;
         }
 
@@ -79,7 +85,7 @@ namespace Eschelle{
             std::stringstream stream;
             while((next = Next()) != '"') stream << next;
             result = new Token(kLIT_STRING, stream.str());
-        } else if(isdigit(next)){
+        } else if(IsDigit(next)){
             std::stringstream stream;
             stream << next;
 
@@ -113,82 +119,98 @@ namespace Eschelle{
         return result;
     }
 
-    AstNode* Parser::ParseStatement(Class* cls, Function* func){
+    void Parser::ParseStatement(Class* cls, Function* func){
         Token* next;
         switch((CONSUME)->GetKind()){
-            case kSEMICOLON: return nullptr;
+            case kSEMICOLON: return;
             case kVAR:{
-                ParseLocals(func);
+                Array<LocalDesc*>* locals = ParseLocals();
+                for(int i = 0; i < locals->Length(); i++){
+                    LocalVariable* local = new LocalVariable((*locals)[i]->type, (*locals)[i]->name);
+                    if(!func->GetAst()->GetScope()->AddLocal(local)){
+                        std::cerr << "Unable to add local " << (*locals)[i]->name << std::endl;
+                        getchar();
+                        abort();
+                    }
+                    if((*locals)[i]->value != nullptr){
+                        func->AddAst(new StoreLocalNode(local, (*locals)[i]->value));
+                    }
+                }
                 break;
             }
             default:{
                 UNEXPECTED;
             }
         }
-
-        return func->GetAst();
     }
 
-    void Parser::ParseLocals(Function *func){
-        Token* next;
-        do{
+    Array<Parser::LocalDesc*>* Parser::ParseLocals(){
+        Array<LocalDesc*>* locals = new Array<LocalDesc*>(10);
+
+        Token* next = nullptr;
+
+        entry:
             EXPECT(kIDENTIFIER);
             std::string ident = next->GetText();
             EXPECT(kCOLON);
             EXPECT(kIDENTIFIER);
             std::string type_ident = next->GetText();
-
             Class* type_cls = code_->FindClass(type_ident);
-            LocalVariable* local = new LocalVariable(type_cls, ident);
 
-            if(!(func->GetAst()->GetScope()->AddLocal(local))){
-                std::cout << "Local " << ident << " already exists" << std::endl;
-                getchar();
-                abort();
-            }
-
+            AstNode* value = nullptr;
+        exit_0:
             switch((CONSUME)->GetKind()){
                 case kCOMMA:{
-                    continue;
+                    goto exit_1;
                 }
                 case kSEMICOLON:{
-                    return;
+                    locals->Add(new LocalDesc(ident, type_cls, value));
+                    return locals;
                 }
                 case kEQUALS:{
-                    //TODO: Parse Initializer
-                    break;
+                    value = ParseBinaryExpr();
+                    goto exit_0;
                 }
                 default: UNEXPECTED;
             }
-        } while(true);
+        exit_1:
+            locals->Add(new LocalDesc(ident, type_cls, value));
+            goto entry;
     }
 
-    void Parser::ParseFields(Class *cls){
-        Token* next;
-        do{
+    Array<Parser::FieldDesc*>* Parser::ParseFields(bool parse_init){
+        Array<FieldDesc*>* fields = new Array<FieldDesc*>(10);
+
+        Token* next = nullptr;
+
+        entry:
             EXPECT(kIDENTIFIER);
             std::string ident = next->GetText();
             EXPECT(kCOLON);
             EXPECT(kIDENTIFIER);
-            std::string type = next->GetText();
+            std::string type_ident = next->GetText();
+            Class* type_cls = code_->FindClass(type_ident);
 
-            Class* type_cls = code_->FindClass(type);
-            Field* field = cls->DefineField(ident, type_cls, private_);
-
+            AstNode* value = nullptr;
+        exit_0:
             switch((CONSUME)->GetKind()){
                 case kCOMMA:{
-                    continue;
+                    goto exit_1;
                 }
                 case kSEMICOLON:{
-                    return;
+                    fields->Add(new FieldDesc(ident, type_cls, value));
+                    return fields;
                 }
                 case kEQUALS:{
-                    //TODO: Handle Case?
-                    break;
+                    if(!parse_init) UNEXPECTED;
+                    value = ParseBinaryExpr();
+                    goto exit_0;
                 }
                 default: UNEXPECTED;
             }
-        } while(true);
+        exit_1:
+            fields->Add(new FieldDesc(ident, type_cls, value));
+            goto entry;
     }
 
     void Parser::ParseParameters(Function *func){
@@ -215,17 +237,67 @@ namespace Eschelle{
                     private_ = true;
                     break;
                 }
+                case kPROTO:{
+                    EXPECT(kIDENTIFIER);
+                    std::string cls_ident = next->GetText();
+
+                    Class* parent = Class::OBJECT;
+                    _p_entry:
+                        switch((CONSUME)->GetKind()){
+                            case kLBRACE:{
+                                result = new Class(cls_ident, (private_ ? kPrivate : kNone), parent, kProtoClass);
+                                private_ = false;
+                                break;
+                            }
+                            default: UNEXPECTED;
+                        }
+
+                    do{
+                        switch((CONSUME)->GetKind()){
+                            case kVAR:{
+                                std::cout << "Parsing fields" << std::endl;
+                                Array<FieldDesc*>* fields = ParseFields(false);
+                                for(int i = 0; i < fields->Length(); i++){
+                                    std::cout << "Adding field " << (*fields)[i]->name << std::endl;
+                                    if(result->GetField((*fields)[i]->name) != nullptr){
+                                        std::cerr << "Unable to add field '" << (*fields)[i]->name << "'" << std::endl;
+                                        getchar();
+                                        abort();
+                                    }
+
+                                    Field* field = result->DefineStaticField((*fields)[i]->name, (*fields)[i]->type, private_);
+                                    if((*fields)[i]->value != nullptr) result->GetConstructor()->AddAst(new StoreStaticFieldNode(field, (*fields)[i]->value));
+                                }
+                                break;
+                            }
+                            case kFUNC:{
+                                EXPECT(kIDENTIFIER);
+                                std::string ident = next->GetText();
+
+                                Class* ret_type = Class::VOID;
+                                Function* func = result->DefineFunction(ident, ret_type, private_);
+
+                                EXPECT(kLPAREN);
+                                ParseParameters(func);
+                                EXPECT(kSEMICOLON);
+                                break;
+                            }
+                            case kRBRACE: return result;
+                            default: UNEXPECTED;
+                        }
+                    } while(true);
+                }
                 case kCLASS:{
                     EXPECT(kIDENTIFIER);
                     std::string identifier = next->GetText();
 
                     Class* parent = Class::OBJECT;
-                    do{
+                    _c_entry:
                         switch((CONSUME)->GetKind()){
                             case kEXTENDS:{
                                 EXPECT(kIDENTIFIER);
                                 parent = code_->FindClass(next->GetText());
-                                continue;
+                                goto _c_entry;
                             }
                             case kLBRACE:{
                                 result = new Class(identifier, (private_ ? kPrivate : kNone), parent);
@@ -234,7 +306,6 @@ namespace Eschelle{
                             }
                             default: UNEXPECTED;
                         }
-                    } while(result == nullptr);
 
                     do{
                         switch((CONSUME)->GetKind()){
@@ -251,7 +322,18 @@ namespace Eschelle{
                                 break;
                             }
                             case kVAR:{
-                                ParseFields(result);
+                                Array<FieldDesc*>* fields = ParseFields(true);
+                                for(int i = 0; i < fields->Length(); i++){
+                                    if(result->GetField((*fields)[i]->name) != nullptr){
+                                        std::cerr << "Unable to add field '" << (*fields)[i]->name << "'" << std::endl;
+                                        getchar();
+                                        abort();
+                                    }
+                                    Field* f = result->DefineField((*fields)[i]->name, (*fields)[i]->type, private_);
+                                    if((*fields)[i]->value != nullptr){
+                                        result->GetConstructor()->AddAst(new StoreStaticFieldNode(f, (*fields)[i]->value));
+                                    }
+                                }
                                 break;
                             }
                             case kFUNC:{
@@ -264,12 +346,10 @@ namespace Eschelle{
                                 EXPECT(kLPAREN);
                                 ParseParameters(func);
                                 EXPECT(kLBRACE);
-                                while((CONSUME)->GetKind() != kRBRACE){
-                                    AstNode* stmt = ParseStatement(result, func);
-                                    if(stmt != nullptr){
-                                        func->AddAst(stmt);
-                                    }
-                                }
+                                do{
+                                    ParseStatement(result, func);
+                                } while(PeekToken()->GetKind() != kRBRACE);
+                                EXPECT(kRBRACE);
                                 break;
                             }
                             default: UNEXPECTED;
@@ -296,9 +376,10 @@ namespace Eschelle{
                                     getchar();
                                     abort();
                                 }
-
                                 std::string name = next->GetText();
-                                result->DefineStaticField(name, result, false);
+                                Field* field = result->DefineStaticField(name, result, false);
+                                Object* ordinal = new Int(result->GetFieldCount());
+                                result->GetConstructor()->AddAst(new StoreStaticFieldNode(field, new LiteralNode(ordinal)));
                                 break;
                             }
                             case kCOMMA:{
@@ -323,11 +404,9 @@ namespace Eschelle{
         file_ = fopen(file.c_str(), "r");
         code_ = new CodeUnit(file);
 
-        while(Peek() != EOF){
+        while(PeekToken()->GetKind() != kEOF){
             Class* def = ParseDefinition();
-            if(def != nullptr){
-                code_->AddClass(def);
-            }
+            if(def != nullptr) code_->AddClass(def);
         }
 
         fclose(file_);

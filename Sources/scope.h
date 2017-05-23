@@ -24,6 +24,10 @@ namespace Eschelle{
                 owner_(nullptr),
                 value_(nullptr){}
 
+        std::string GetName() const{
+            return name_;
+        }
+
         void SetOwner(LocalScope* scope){
             owner_ = scope;
         }
@@ -62,6 +66,11 @@ namespace Eschelle{
                 parent->child_ = this;
             }
         }
+        LocalScope():
+                parent_(nullptr),
+                variables_(10),
+                sibling_(nullptr),
+                child_(nullptr){}
 
         bool AddLocal(LocalVariable* local);
         bool HasLocal(std::string name);

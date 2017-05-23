@@ -6,19 +6,56 @@
 namespace Eschelle{
     class AstPrinter : public AstNodeVisitor{
     private:
+        std::ostream& stream_;
         int offset_ = 0;
+
+        inline void Adjust(){
+            for(int i = 0; i < offset_; i++) std::cout << " ";
+        }
     public:
-        AstPrinter(){}
+        AstPrinter(std::ostream& stream):
+                stream_(stream){}
         ~AstPrinter(){}
 
         void VisitSequence(SequenceNode* node){
-            std::cout << node->Name() << std::endl;
+            Adjust();
+            stream_ << "{" << std::endl;
+            offset_++;
             node->VisitChildren(this);
+            offset_--;
+            stream_ << "}" << std::endl;
+        }
+
+        void VisitLiteral(LiteralNode* node){
+            stream_ << node->GetLiteral()->ToString();
+        }
+
+        void VisitBinaryOp(BinaryOpNode* node){
+            node->GetLeft()->Visit(this);
+            switch(node->GetKind()){
+                case kPLUS: stream_ << " + "; break;
+                case kMINUS: stream_ << " - "; break;
+                case kDIVIDE: stream_ << " / "; break;
+                case kMULTIPLY: stream_ << " * "; break;
+                default: stream_ << " ? "; break;
+            }
+            node->GetRight()->Visit(this);
+        }
+
+        void VisitStoreLocal(StoreLocalNode* node){
+            Adjust();
+            stream_ << "SL\t" << node->GetLocal()->GetName();
+            stream_ << "[" << node->GetLocal()->GetType()->GetName() << "] := ";
+            node->VisitChildren(this);
+            stream_ << std::endl;
         }
 
         void VisitStoreStaticField(StoreStaticFieldNode* node){
-            std::cout << node->Name() << std::endl;
+            Adjust();
+            stream_ << "SS\t" << node->GetField()->GetName();
+            stream_ << "[" << node->GetField()->GetFieldType()->GetName() << "] := ";
             node->VisitChildren(this);
+            stream_ << std::endl;
         }
     };
 }

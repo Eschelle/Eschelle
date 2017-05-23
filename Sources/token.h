@@ -12,7 +12,8 @@ namespace Eschelle{
     V(kEXTENDS, "extends") \
     V(kNIL, "nil") \
     V(kVAR, "var") \
-    V(kFUNC, "func")
+    V(kFUNC, "func") \
+    V(kPROTO, "proto")
 
 #define FOR_EACH_TOKEN_SYM(V) \
     V(kEQUALS, "=") \
@@ -22,6 +23,8 @@ namespace Eschelle{
     V(kCOMMA, ",") \
     V(kPLUS, "+") \
     V(kMINUS, "-") \
+    V(kMULTIPLY, "*") \
+    V(kDIVIDE, "/") \
     V(kCOLON, ":") \
     V(kLPAREN, "(") \
     V(kRPAREN, ")")

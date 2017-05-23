@@ -25,7 +25,7 @@ namespace Eschelle{
     }
 
     bool LocalScope::HasLocal(std::string name){
-        for(int i = 0; variables_.Length(); i++){
+        for(int i = 0; i < variables_.Length(); i++){
             if(variables_[i]->name_ == name){
                 return true;
             }

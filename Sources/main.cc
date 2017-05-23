@@ -33,42 +33,16 @@ main(int argc, char** argv){
     Function f = reinterpret_cast<Function>(region->Pointer());
 
     std::cout << f() << std::endl;
-    */
+     */
 
     Parser* parser = new Parser();
     CodeUnit* code = parser->Parse(std::string(argv[1]));
-    Class* Test = code->FindClass("Test");
 
-    std::cout << Test->GetName() << std::endl;
-    std::cout << "Private?: " << Test->IsPrivate() << std::endl;
-    std::cout << "Fields: " << Test->GetFieldCount() << std::endl;
-    for(int i = 0; i < Test->GetFieldCount(); i++){
-        std::cout << "\t#" << i << ": " << Test->GetFieldAt(i)->GetName() << " - " << Test->GetFieldAt(i)->GetFieldType()->GetName() << std::endl;
-    }
-
-    Class* Test2 = code->FindClass("Test2");
-
-    std::cout << Test2->GetName() << std::endl;
-    std::cout << "Private?: " << Test2->IsPrivate() << std::endl;
-    std::cout << "Fields: " << Test2->GetFieldCount() << std::endl;
-    for(int i = 0; i < Test2->GetFieldCount(); i++){
-        std::cout << "\t#" << i << ": " << Test2->GetFieldAt(i)->GetName() << " - " << Test2->GetFieldAt(i)->GetFieldType()->GetName() << std::endl;
-    }
-
-    Class* Test3 = code->FindClass("Test3");
-
-    std::cout << Test3->GetName() << std::endl;
-    std::cout << "Private?: " << Test3->IsPrivate() << std::endl;
-    std::cout << "Fields: " << Test3->GetFieldCount() << std::endl;
-    for(int i = 0; i < Test3->GetFieldCount(); i++){
-        std::cout << "\t#" << i << ": " << Test3->GetFieldAt(i)->GetName() << " - " << Test3->GetFieldAt(i)->GetFieldType()->GetName() << std::endl;
-    }
-    std::cout << "Functions: " << Test3->GetFunctionCount() << std::endl;
-    for(int i = 0; i < Test3->GetFunctionCount(); i++){
-        Function* func = Test3->GetFunctionAt(i);
-        std::cout << "\t#" << i << ": " << func->GetName() << " - " << func->GetReturnType()->GetName() << std::endl;
-        AstPrinter printer;
-        func->GetAst()->Visit(&printer);
-    }
+    Class* cls1 = code->FindClass("Test");
+    std::cout << *cls1 << std::endl;
+    Class* cls2 = code->FindClass("Test2");
+    std::cout << *cls2 << std::endl;
+    Class* cls3 = code->FindClass("Test3");
+    std::cout << *cls3 << std::endl;
     return 0;
 }

@@ -1,6 +1,7 @@
 #include "object.h"
 #include "alloc.h"
 #include "ast.h"
+#include "ast_printer.h"
 
 namespace Eschelle{
     Field* Class::DefineField(std::string name, Class *type, bool priv){
@@ -92,4 +93,36 @@ namespace Eschelle{
     void Function::AddAst(AstNode* node){
         ast_->Add(node);
     }
+
+#if defined(ESCH_DEBUG)
+    std::ostream& operator<<(std::ostream &stream, const Class& cls){
+        stream << cls.GetName() << std::endl;
+        stream << "Type: ";
+        switch(cls.GetType()){
+            case kClassClass: stream << "Class" << std::endl; break;
+            case kEnumClass: stream << "Enum" << std::endl; break;
+            case kObjectClass: stream << "Object" << std::endl; break;
+            case kProtoClass: stream << "Prototype" << std::endl; break;
+            default: stream << "Unknown" << std::endl; break;
+        }
+        stream << "Fields: " << cls.GetFieldCount() << std::endl;
+        for(int i = 0; i < cls.GetFieldCount(); i++){
+            Field* f = cls.GetFieldAt(i);
+            stream << "\t#" << i << ": " << f->GetName() << std::endl;
+        }
+        stream << "Functions: " << cls.GetFunctionCount() << std::endl;
+        for(int i = 0; i < cls.GetFunctionCount(); i++){
+            Function* func = cls.GetFunctionAt(i);
+            stream << "\t#" << i << ": " << func->GetName();
+            if(!func->IsAbstract()){
+                stream << std::endl;
+                AstPrinter printer(std::cout);
+                func->GetAst()->Visit(&printer);
+            } else{
+                stream << " - Abstract" << std::endl;
+            }
+        }
+        return stream;
+    }
+#endif // ESCH_DEBUG
 }

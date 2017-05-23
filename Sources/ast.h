@@ -60,7 +60,10 @@ namespace Eschelle{
     public:
         SequenceNode():
                 children_(10),
-                scope_(nullptr){}
+                scope_(new LocalScope()){}
+        SequenceNode(LocalScope* parent):
+                children_(10),
+                scope_(new LocalScope(parent)){}
 
         LocalScope* GetScope() const{
             return scope_;
@@ -104,7 +107,8 @@ namespace Eschelle{
         }
 
         void VisitChildren(AstNodeVisitor* vis){
-
+            GetLeft()->Visit(vis);
+            GetRight()->Visit(vis);
         }
 
         DECLARE_COMMON_NODE_FUNCTIONS(BinaryOp)
@@ -121,13 +125,18 @@ namespace Eschelle{
     };
 
     class LiteralNode : public AstNode{
+    private:
+        Object* instance_;
     public:
-        LiteralNode(){}
+        LiteralNode(Object* instance):
+            instance_(instance){}
         ~LiteralNode(){}
 
-        void VisitChildren(AstNodeVisitor* vis){
-
+        Object* GetLiteral() const{
+            return instance_;
         }
+
+        void VisitChildren(AstNodeVisitor* vis){}
 
         DECLARE_COMMON_NODE_FUNCTIONS(Literal)
     };

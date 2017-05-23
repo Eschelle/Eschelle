@@ -48,6 +48,13 @@ namespace Eschelle{
         kPrivate = 1 << 5
     };
 
+    enum ClassType{
+        kEnumClass = 1 << 0,
+        kClassClass = 1 << 1,
+        kProtoClass = 1 << 2,
+        kObjectClass = 1 << 3
+    };
+
     class Object{
     public:
         virtual std::string ToString() = 0;
@@ -58,18 +65,23 @@ namespace Eschelle{
         std::string name_;
         int mods_;
         Class* super_;
+        ClassType type_;
 
         Array<Field*> fields_;
         Array<Function*> functions_;
+        Function* ctor_;
 
         friend class Instance;
     public:
-        Class(std::string name, int mods, Class* super = Class::OBJECT):
+        Class(std::string name, int mods, Class* super = Class::OBJECT, ClassType type = kClassClass):
                 name_(name),
                 mods_(mods),
                 fields_(0xA),
                 functions_(0xA),
-                super_(super){}
+                type_(type),
+                super_(super){
+            ctor_ = DefineFunction(name, Class::VOID, false);
+        }
 
         virtual std::string ToString(){
             std::stringstream stream;
@@ -77,7 +89,11 @@ namespace Eschelle{
             return stream.str();
         }
 
-        std::string GetName(){
+        Function* GetConstructor() const{
+            return ctor_;
+        }
+
+        std::string GetName() const{
             return name_;
         }
 
@@ -111,6 +127,10 @@ namespace Eschelle{
             return functions_[index];
         }
 
+        ClassType GetType() const{
+            return type_;
+        }
+
         static Class* OBJECT;
         static Class* STRING;
         static Class* BOOLEAN;
@@ -141,6 +161,10 @@ namespace Eschelle{
             return result_type_;
         }
 
+        Class* GetOwner() const{
+            return owner_;
+        }
+
         SequenceNode* GetAst() const{
             return ast_;
         }
@@ -151,6 +175,10 @@ namespace Eschelle{
             std::stringstream stream;
             stream << "Function " << name_;
             return stream.str();
+        }
+
+        bool IsAbstract() const{
+            return GetOwner()->GetType() == kProtoClass;
         }
     };
 
@@ -331,6 +359,10 @@ namespace Eschelle{
             return nullptr;
         }
     };
+
+#if defined(ESCH_DEBUG)
+    std::ostream& operator<<(std::ostream& stream, const Class& cls);
+#endif // ESCH_DEBUG
 }
 
 #endif //ESCHELLE_OBJECT_H

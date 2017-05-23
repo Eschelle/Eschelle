@@ -14,6 +14,28 @@ namespace Eschelle{
         CodeUnit* code_;
         bool private_;
 
+        struct LocalDesc{
+            std::string name;
+            Class* type;
+            AstNode* value;
+
+            LocalDesc(std::string n, Class* t, AstNode* v):
+                    name(n),
+                    type(t),
+                    value(v){}
+        };
+
+        struct FieldDesc{
+            std::string name;
+            Class* type;
+            AstNode* value;
+
+            FieldDesc(std::string n, Class* t, AstNode* v):
+                    name(n),
+                    type(t),
+                    value(v){}
+        };
+
         inline char Peek(){
             int c = getc(file_);
             ungetc(c, file_);
@@ -31,10 +53,12 @@ namespace Eschelle{
             return next;
         }
 
-        inline bool IsDefinition(TokenKind kind){
+        inline bool IsExpr(TokenKind kind){
             switch(kind){
-                case kCLASS:
-                case kENUM: return true;
+                case kPLUS:
+                case kMINUS:
+                case kDIVIDE:
+                case kMULTIPLY: return true;
                 default: return false;
             }
         }
@@ -64,6 +88,11 @@ namespace Eschelle{
             }
         }
 
+        inline int IsDigit(char c){
+            return (c >= '0') &&
+                    (c <= '9');
+        }
+
         inline int GetKeyword(std::string txt){
 #define LEX(Tk, Name) \
             if(txt == Name) return Tk;
@@ -76,15 +105,16 @@ namespace Eschelle{
             return GetKeyword(txt) != -1;
         }
 
-        void ParseLocals(Function* func);
-        void ParseFields(Class* cls);
         void ParseParameters(Function* func);
-        AstNode* ParseStatement(Class* cls, Function* func);
+        void ParseStatement(Class* cls, Function* func);
+        Array<FieldDesc*>* ParseFields(bool parse_init);
+        Array<LocalDesc*>* ParseLocals();
         AstNode* ParseBinaryExpr();
         AstNode* ParseUnaryExpr();
         Class* ParseDefinition();
 
         Token* NextToken();
+        Token* PeekToken();
     public:
         Parser():
                 file_(nullptr),
