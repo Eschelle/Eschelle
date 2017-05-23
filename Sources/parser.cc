@@ -117,15 +117,50 @@ namespace Eschelle{
         Token* next;
         switch((CONSUME)->GetKind()){
             case kSEMICOLON: return nullptr;
-            case kIDENTIFIER:{
-                std::string ident = next->GetText();
-                EXPECT(kSEMICOLON);
-                return new StoreStaticFieldNode(cls->GetField(ident), new LiteralNode());
+            case kVAR:{
+                ParseLocals(func);
+                break;
             }
             default:{
                 UNEXPECTED;
             }
         }
+
+        return func->GetAst();
+    }
+
+    void Parser::ParseLocals(Function *func){
+        Token* next;
+        do{
+            EXPECT(kIDENTIFIER);
+            std::string ident = next->GetText();
+            EXPECT(kCOLON);
+            EXPECT(kIDENTIFIER);
+            std::string type_ident = next->GetText();
+
+            Class* type_cls = code_->FindClass(type_ident);
+            LocalVariable* local = new LocalVariable(type_cls, ident);
+
+            if(!(func->GetAst()->GetScope()->AddLocal(local))){
+                std::cout << "Local " << ident << " already exists" << std::endl;
+                getchar();
+                abort();
+            }
+
+            switch((CONSUME)->GetKind()){
+                case kCOMMA:{
+                    continue;
+                }
+                case kSEMICOLON:{
+                    return;
+                }
+                case kEQUALS:{
+                    //TODO: Parse Initializer
+                    break;
+                }
+                default: UNEXPECTED;
+            }
+        } while(true);
     }
 
     void Parser::ParseFields(Class *cls){
@@ -153,8 +188,6 @@ namespace Eschelle{
                 }
                 default: UNEXPECTED;
             }
-
-            if(field != nullptr) std::cout << "Declared field: " << field->GetName() << std::endl;
         } while(true);
     }
 

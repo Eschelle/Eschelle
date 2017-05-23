@@ -12,15 +12,29 @@ namespace Eschelle{
         std::string name_;
         LocalScope* owner_;
         int index_;
+        Class* type_;
         Instance* value_;
 
         friend class LocalScope;
     public:
-        LocalVariable(std::string name):
+        LocalVariable(Class* type, std::string name):
                 name_(name),
+                type_(type),
                 index_(-1),
                 owner_(nullptr),
                 value_(nullptr){}
+
+        void SetOwner(LocalScope* scope){
+            owner_ = scope;
+        }
+
+        LocalScope* GetOwner() const{
+            return owner_;
+        }
+
+        Class* GetType() const{
+            return type_;
+        }
 
         bool IsConstant() const{
             return value_ != nullptr;
@@ -49,6 +63,8 @@ namespace Eschelle{
             }
         }
 
+        bool AddLocal(LocalVariable* local);
+        bool HasLocal(std::string name);
         bool LocalLookup(std::string name, LocalVariable** result);
         bool Lookup(std::string name, LocalVariable** result);
     };

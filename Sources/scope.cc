@@ -23,4 +23,20 @@ namespace Eschelle{
         *result = nullptr;
         return false;
     }
+
+    bool LocalScope::HasLocal(std::string name){
+        for(int i = 0; variables_.Length(); i++){
+            if(variables_[i]->name_ == name){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    bool LocalScope::AddLocal(LocalVariable *local){
+        if(HasLocal(local->name_)) return false;
+        variables_.Add(local);
+        if(local->GetOwner() == nullptr) local->SetOwner(this);
+        return true;
+    }
 }

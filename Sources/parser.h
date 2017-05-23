@@ -76,6 +76,7 @@ namespace Eschelle{
             return GetKeyword(txt) != -1;
         }
 
+        void ParseLocals(Function* func);
         void ParseFields(Class* cls);
         void ParseParameters(Function* func);
         AstNode* ParseStatement(Class* cls, Function* func);

@@ -13,7 +13,9 @@ namespace Eschelle{
     V(Sequence) \
     V(BinaryOp) \
     V(StoreStaticField) \
-    V(LoadStaticField)
+    V(LoadStaticField) \
+    V(StoreLocal) \
+    V(LoadLocal)
 
 #define DECLARE_COMMON_NODE_FUNCTIONS(BaseName) \
     virtual const char* Name(){ return #BaseName; } \
@@ -59,6 +61,10 @@ namespace Eschelle{
         SequenceNode():
                 children_(10),
                 scope_(nullptr){}
+
+        LocalScope* GetScope() const{
+            return scope_;
+        }
 
         void Add(AstNode* node){
             children_.Add(node);
@@ -166,6 +172,48 @@ namespace Eschelle{
         void VisitChildren(AstNodeVisitor* vis){}
 
         DECLARE_COMMON_NODE_FUNCTIONS(LoadStaticField)
+    };
+
+    class StoreLocalNode : public AstNode{
+    private:
+        LocalVariable* local_;
+        AstNode* value_;
+    public:
+        StoreLocalNode(LocalVariable* local, AstNode* value):
+                local_(local),
+                value_(value){}
+        ~StoreLocalNode(){}
+
+        LocalVariable* GetLocal() const{
+            return local_;
+        }
+
+        AstNode* GetValue() const{
+            return value_;
+        }
+
+        void VisitChildren(AstNodeVisitor* vis){
+            GetValue()->Visit(vis);
+        }
+
+        DECLARE_COMMON_NODE_FUNCTIONS(StoreLocal);
+    };
+
+    class LoadLocalNode : public AstNode{
+    private:
+        LocalVariable* local_;
+    public:
+        LoadLocalNode(LocalVariable* local):
+                local_(local){}
+        ~LoadLocalNode(){}
+
+        LocalVariable* GetLocal() const{
+            return local_;
+        }
+
+        void VisitChildren(AstNodeVisitor* vis){}
+
+        DECLARE_COMMON_NODE_FUNCTIONS(LoadLocal);
     };
 }
 
