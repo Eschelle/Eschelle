@@ -1,8 +1,8 @@
 #include "common.h"
 #if defined(OS_IS_OSX)
-#include "vmemory.h"
-#include "sys/mman.h"
+#include <sys/mman.h>
 #include <iostream>
+#include "vmemory.h"
 
 #undef MAP_FAILED
 #define MAP_FAILED reinterpret_cast<void*>(-1)

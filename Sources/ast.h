@@ -127,25 +127,43 @@ namespace Eschelle{
     };
 
     class StoreStaticFieldNode : public AstNode{
+    private:
+        Field* field_;
+        AstNode* value_;
     public:
-        StoreStaticFieldNode(){}
+        StoreStaticFieldNode(Field* field, AstNode* value):
+            field_(field),
+            value_(value){}
         ~StoreStaticFieldNode(){}
 
-        void VisitChildre(AstNodeVisitor* vis){
+        Field* GetField() const{
+            return field_;
+        }
 
+        AstNode* GetValue() const{
+            return value_;
+        }
+
+        void VisitChildren(AstNodeVisitor* vis){
+            GetValue()->Visit(vis);
         }
 
         DECLARE_COMMON_NODE_FUNCTIONS(StoreStaticField)
     };
 
     class LoadStaticFieldNode : public AstNode{
+    private:
+        Field* field_;
     public:
-        LoadStaticFieldNode(){}
+        LoadStaticFieldNode(Field* field):
+                field_(field){}
         ~LoadStaticFieldNode(){}
 
-        void VisitChildren(AstNodeVisitor* vis){
-
+        Field* GetField() const{
+            return field_;
         }
+
+        void VisitChildren(AstNodeVisitor* vis){}
 
         DECLARE_COMMON_NODE_FUNCTIONS(LoadStaticField)
     };

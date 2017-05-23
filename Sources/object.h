@@ -43,7 +43,8 @@ namespace Eschelle{
         kFinal = 1 << 1,
         kStatic = 1 << 2,
         kAbstract = 1 << 3,
-        kNative = 1 << 4
+        kNative = 1 << 4,
+        kPrivate = 1 << 5
     };
 
     class Object{
@@ -79,10 +80,18 @@ namespace Eschelle{
             return name_;
         }
 
+        bool IsPrivate() const{
+            return (mods_ & kPrivate) == kPrivate;
+        }
+
         word GetAllocationSize();
 
         word GetFieldCount(){
             return fields_.Length();
+        }
+
+        Field* GetFieldAt(word index) const{
+            return fields_[index];
         }
 
         Field* DefineStaticField(std::string name, Class* type);
@@ -261,7 +270,16 @@ namespace Eschelle{
     public:
         CodeUnit(std::string loc):
                 classes_(10),
-                location_(loc){}
+                location_(loc){
+            AddClass(Class::STRING);
+        }
+
+        Class* FindClass(std::string name) const{
+            for(int i = 0; i < classes_.Length(); i++){
+                if(classes_[i]->GetName() == name) return classes_[i];
+            }
+            return nullptr;
+        }
     };
 }
 

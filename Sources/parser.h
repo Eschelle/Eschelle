@@ -11,6 +11,7 @@ namespace Eschelle{
         FILE* file_;
         Token* peek_;
         LocalScope* scope_;
+        CodeUnit* code_;
         bool private_;
 
         inline char Peek(){
@@ -28,6 +29,14 @@ namespace Eschelle{
             char next;
             while(isspace(next = Next()));
             return next;
+        }
+
+        inline bool IsDefinition(TokenKind kind){
+            switch(kind){
+                case kCLASS:
+                case kENUM: return true;
+                default: return false;
+            }
         }
 
         inline bool IsSymbol(char c){
@@ -67,10 +76,12 @@ namespace Eschelle{
             return GetKeyword(txt) != -1;
         }
 
+        void ParseFields(Class* cls);
         AstNode* ParseEnum();
         AstNode* ParseStatement();
         AstNode* ParseBinaryExpr();
         AstNode* ParseUnaryExpr();
+        Class* ParseDefinition();
 
         Token* NextToken();
     public:
@@ -80,7 +91,7 @@ namespace Eschelle{
                 scope_(nullptr){}
         ~Parser(){}
 
-        AstNode* Parse(std::string file);
+        CodeUnit* Parse(std::string file);
     };
 }
 

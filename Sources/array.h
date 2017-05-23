@@ -21,7 +21,7 @@ namespace Eschelle{
             free(data_);
         }
 
-        word Length(){
+        word Length() const{
             return length_;
         }
 

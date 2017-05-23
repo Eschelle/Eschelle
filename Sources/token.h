@@ -7,8 +7,11 @@
 namespace Eschelle{
 #define FOR_EACH_TOKEN_KW(V) \
     V(kENUM, "enum") \
+    V(kCLASS, "class") \
     V(kPRIVATE, "private") \
-    V(kNIL, "nil")
+    V(kEXTENDS, "extends") \
+    V(kNIL, "nil") \
+    V(kVAR, "var")
 
 #define FOR_EACH_TOKEN_SYM(V) \
     V(kEQUALS, "=") \
@@ -17,7 +20,8 @@ namespace Eschelle{
     V(kSEMICOLON, ";") \
     V(kCOMMA, ",") \
     V(kPLUS, "+") \
-    V(kMINUS, "-")
+    V(kMINUS, "-") \
+    V(kCOLON, ":")
 
 #define FOR_EACH_TOKEN_LIT(V) \
     V(kLIT_STRING, "<literal string>") \

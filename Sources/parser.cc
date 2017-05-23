@@ -12,6 +12,11 @@ namespace Eschelle{
 })
 #define DECONSUME \
     peek_ = next;
+#define EXPECT(Kind) ({ \
+    if((next = NextToken())->GetKind() != Kind){ \
+        std::cerr << "Unexpected: " << next->GetText() << "$" << next->GetKind() << std::endl; \
+    } \
+})
 
     AstNode* Parser::ParseUnaryExpr(){
         AstNode* primary = nullptr;
@@ -61,6 +66,10 @@ namespace Eschelle{
             case '=': return new Token(kEQUALS, "=");
             case '+': return new Token(kPLUS, "+");
             case '-': return new Token(kMINUS, "-");
+            case '{': return new Token(kLBRACE, "{");
+            case '}': return new Token(kRBRACE, "}");
+            case ';': return new Token(kSEMICOLON, ";");
+            case ':': return new Token(kCOLON, ":");
             default: break;
         }
 
@@ -102,55 +111,148 @@ namespace Eschelle{
         return result;
     }
 
-    AstNode* Parser::ParseEnum(){
-        Token* next;
-
-        // SequenceNode* cstr = new SequenceNode();
-
-        if((CONSUME)->GetKind() != kIDENTIFIER) UNEXPECTED;
-        Class* cls = new Class(next->GetText(), kFinal);
-        if((CONSUME)->GetKind() != kLBRACE) UNEXPECTED;
-        while((CONSUME)->GetKind() != kRBRACE){
-            switch(next->GetKind()){
-                case kIDENTIFIER:{
-                    Field* f = cls->DefineStaticField(next->GetText(), cls);
-                    if((CONSUME)->GetKind() != kCOMMA) UNEXPECTED;
-                    break;
-                }
-                default: UNEXPECTED;
-            }
-        }
-
-        //return cstr;
-        return nullptr;
-    }
-
     AstNode* Parser::ParseStatement(){
         Token* next;
         switch((CONSUME)->GetKind()){
             case kSEMICOLON: return nullptr;
-            case kENUM:{
-                return ParseEnum();
-            }
             default:{
                 UNEXPECTED;
             }
         }
     }
 
-    AstNode* Parser::Parse(std::string file){
-        file_ = fopen(file.c_str(), "r");
+    void Parser::ParseFields(Class *cls){
+        Token* next;
+        do{
+            EXPECT(kIDENTIFIER);
+            std::string ident = next->GetText();
+            EXPECT(kCOLON);
+            EXPECT(kIDENTIFIER);
+            std::string type = next->GetText();
 
-        SequenceNode* code = new SequenceNode();
+            Class* type_cls = code_->FindClass(type);
+            Field* field = cls->DefineField(ident, type_cls);
+
+            switch((CONSUME)->GetKind()){
+                case kCOMMA:{
+                    continue;
+                }
+                case kSEMICOLON:{
+                    return;
+                }
+                case kEQUALS:{
+                    //TODO: Handle Case?
+                    break;
+                }
+                default: UNEXPECTED;
+            }
+
+            if(field != nullptr) std::cout << "Declared field: " << field->GetName() << std::endl;
+        } while(true);
+    }
+
+    Class* Parser::ParseDefinition(){
+        Class* result = nullptr;
+
+        Token* next;
+        do{
+            switch((CONSUME)->GetKind()){
+                case kPRIVATE:{
+                    if(private_){
+                        std::cerr << "Already private" << std::endl;
+                        getchar();
+                        abort();
+                    }
+                    private_ = true;
+                    break;
+                }
+                case kCLASS:{
+                    EXPECT(kIDENTIFIER);
+                    std::string identifier = next->GetText();
+
+                    Class* parent = Class::OBJECT;
+                    do{
+                        switch((CONSUME)->GetKind()){
+                            case kEXTENDS:{
+                                EXPECT(kIDENTIFIER);
+                                parent = code_->FindClass(next->GetText());
+                                continue;
+                            }
+                            case kLBRACE:{
+                                result = new Class(identifier, (private_ ? kPrivate : kNone), parent);
+                                break;
+                            }
+                            default: UNEXPECTED;
+                        }
+                    } while(result == nullptr);
+
+                    do{
+                        switch((CONSUME)->GetKind()){
+                            case kRBRACE:{
+                                return result;
+                            }
+                            case kVAR:{
+                                ParseFields(result);
+                                break;
+                            }
+                            default: UNEXPECTED;
+                        }
+                    } while(true);
+                }
+                case kENUM:{
+                    EXPECT(kIDENTIFIER);
+                    std::string identifier = next->GetText();
+
+                    int mods = kFinal;
+                    if(private_) mods |= kPrivate;
+
+                    bool defs_done = false;
+
+                    result = new Class(identifier, mods, Class::OBJECT);
+                    EXPECT(kLBRACE);
+                    while((CONSUME)->GetKind() != kRBRACE){
+                        switch(next->GetKind()){
+                            case kIDENTIFIER:{
+                                if(defs_done){
+                                    std::cerr << "Cannot define any more constants" << std::endl;
+                                    getchar();
+                                    abort();
+                                }
+
+                                std::string name = next->GetText();
+                                result->DefineStaticField(name, result);
+                                break;
+                            }
+                            case kCOMMA:{
+                                break;
+                            }
+                            case kSEMICOLON:{
+                                defs_done = true;
+                                break;
+                            }
+                            default: UNEXPECTED;
+                        }
+                    }
+                    return result;
+                }
+                case kEOF: return result;
+                default: UNEXPECTED;
+            }
+        } while(result != nullptr);
+    }
+
+    CodeUnit* Parser::Parse(std::string file){
+        file_ = fopen(file.c_str(), "r");
+        code_ = new CodeUnit(file);
 
         while(Peek() != EOF){
-            AstNode* stmt = ParseStatement();
-            if(stmt != nullptr){
-                code->Add(stmt);
+            Class* def = ParseDefinition();
+            if(def != nullptr){
+                code_->AddClass(def);
             }
         }
 
         fclose(file_);
-        return code;
+        return code_;
     }
 }

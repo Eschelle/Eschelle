@@ -1,6 +1,8 @@
 #include "object.h"
 #include "alloc.h"
 #include "asm.h"
+#include "parser.h"
+#include "ast_printer.h"
 
 using namespace Eschelle;
 
@@ -16,6 +18,7 @@ main(int argc, char** argv){
     Allocator::PrintHeap(kEden);
     */
 
+    /*
     Assembler assm;
     assm.movq(RAX, Immediate(10));
     assm.movq(RBX, Immediate(100));
@@ -30,5 +33,35 @@ main(int argc, char** argv){
     Function f = reinterpret_cast<Function>(region->Pointer());
 
     std::cout << f() << std::endl;
+    */
+
+    Parser* parser = new Parser();
+    CodeUnit* code = parser->Parse(std::string(argv[1]));
+    Class* Test = code->FindClass("Test");
+
+    std::cout << Test->GetName() << std::endl;
+    std::cout << "Private?: " << Test->IsPrivate() << std::endl;
+    std::cout << "Fields: " << Test->GetFieldCount() << std::endl;
+    for(int i = 0; i < Test->GetFieldCount(); i++){
+        std::cout << "\t#" << i << ": " << Test->GetFieldAt(i)->GetName() << " - " << Test->GetFieldAt(i)->GetFieldType()->GetName() << std::endl;
+    }
+
+    Class* Test2 = code->FindClass("Test2");
+
+    std::cout << Test2->GetName() << std::endl;
+    std::cout << "Private?: " << Test2->IsPrivate() << std::endl;
+    std::cout << "Fields: " << Test2->GetFieldCount() << std::endl;
+    for(int i = 0; i < Test2->GetFieldCount(); i++){
+        std::cout << "\t#" << i << ": " << Test2->GetFieldAt(i)->GetName() << " - " << Test2->GetFieldAt(i)->GetFieldType()->GetName() << std::endl;
+    }
+
+    Class* Test3 = code->FindClass("Test3");
+
+    std::cout << Test3->GetName() << std::endl;
+    std::cout << "Private?: " << Test3->IsPrivate() << std::endl;
+    std::cout << "Fields: " << Test3->GetFieldCount() << std::endl;
+    for(int i = 0; i < Test3->GetFieldCount(); i++){
+        std::cout << "\t#" << i << ": " << Test3->GetFieldAt(i)->GetName() << " - " << Test3->GetFieldAt(i)->GetFieldType()->GetName() << std::endl;
+    }
     return 0;
 }
