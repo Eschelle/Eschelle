@@ -70,6 +70,8 @@ namespace Eschelle{
             case '}': return new Token(kRBRACE, "}");
             case ';': return new Token(kSEMICOLON, ";");
             case ':': return new Token(kCOLON, ":");
+            case '(': return new Token(kLPAREN, "(");
+            case ')': return new Token(kRPAREN, ")");
             default: break;
         }
 
@@ -111,10 +113,15 @@ namespace Eschelle{
         return result;
     }
 
-    AstNode* Parser::ParseStatement(){
+    AstNode* Parser::ParseStatement(Class* cls, Function* func){
         Token* next;
         switch((CONSUME)->GetKind()){
             case kSEMICOLON: return nullptr;
+            case kIDENTIFIER:{
+                std::string ident = next->GetText();
+                EXPECT(kSEMICOLON);
+                return new StoreStaticFieldNode(cls->GetField(ident), new LiteralNode());
+            }
             default:{
                 UNEXPECTED;
             }
@@ -131,7 +138,7 @@ namespace Eschelle{
             std::string type = next->GetText();
 
             Class* type_cls = code_->FindClass(type);
-            Field* field = cls->DefineField(ident, type_cls);
+            Field* field = cls->DefineField(ident, type_cls, private_);
 
             switch((CONSUME)->GetKind()){
                 case kCOMMA:{
@@ -149,6 +156,15 @@ namespace Eschelle{
 
             if(field != nullptr) std::cout << "Declared field: " << field->GetName() << std::endl;
         } while(true);
+    }
+
+    void Parser::ParseParameters(Function *func){
+        Token* next;
+        while((CONSUME)->GetKind() != kRPAREN){
+            switch(next->GetKind()){
+                default: UNEXPECTED;
+            }
+        }
     }
 
     Class* Parser::ParseDefinition(){
@@ -180,6 +196,7 @@ namespace Eschelle{
                             }
                             case kLBRACE:{
                                 result = new Class(identifier, (private_ ? kPrivate : kNone), parent);
+                                private_ = false;
                                 break;
                             }
                             default: UNEXPECTED;
@@ -191,8 +208,35 @@ namespace Eschelle{
                             case kRBRACE:{
                                 return result;
                             }
+                            case kPRIVATE:{
+                                if(private_){
+                                    std::cerr << "Already private" << std::endl;
+                                    getchar();
+                                    abort();
+                                }
+                                private_ = true;
+                                break;
+                            }
                             case kVAR:{
                                 ParseFields(result);
+                                break;
+                            }
+                            case kFUNC:{
+                                EXPECT(kIDENTIFIER);
+                                std::string ident = next->GetText();
+
+                                Class* ret_type = Class::VOID;
+                                Function* func = result->DefineFunction(ident, ret_type, private_);
+
+                                EXPECT(kLPAREN);
+                                ParseParameters(func);
+                                EXPECT(kLBRACE);
+                                while((CONSUME)->GetKind() != kRBRACE){
+                                    AstNode* stmt = ParseStatement(result, func);
+                                    if(stmt != nullptr){
+                                        func->AddAst(stmt);
+                                    }
+                                }
                                 break;
                             }
                             default: UNEXPECTED;
@@ -209,6 +253,7 @@ namespace Eschelle{
                     bool defs_done = false;
 
                     result = new Class(identifier, mods, Class::OBJECT);
+                    private_ = false;
                     EXPECT(kLBRACE);
                     while((CONSUME)->GetKind() != kRBRACE){
                         switch(next->GetKind()){
@@ -220,7 +265,7 @@ namespace Eschelle{
                                 }
 
                                 std::string name = next->GetText();
-                                result->DefineStaticField(name, result);
+                                result->DefineStaticField(name, result, false);
                                 break;
                             }
                             case kCOMMA:{

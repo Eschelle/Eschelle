@@ -6,6 +6,7 @@
 #include <iostream>
 #include "common.h"
 #include "array.h"
+#include "vmemory.h"
 
 namespace Eschelle{
 #define FOR_EACH_TYPE(V) \
@@ -86,23 +87,71 @@ namespace Eschelle{
 
         word GetAllocationSize();
 
-        word GetFieldCount(){
+        word GetFieldCount() const{
             return fields_.Length();
         }
+
+        Field* DefineStaticField(std::string name, Class* type, bool priv);
+        Field* DefineField(std::string name, Class* type, bool priv);
+        Field* GetField(std::string name);
 
         Field* GetFieldAt(word index) const{
             return fields_[index];
         }
 
-        Field* DefineStaticField(std::string name, Class* type);
-        Field* DefineField(std::string name, Class* type);
-        Field* GetField(std::string name);
+        word GetFunctionCount() const{
+            return functions_.Length();
+        }
+
+        Function* DefineStaticFunction(std::string name, Class* ret_type, bool priv);
+        Function* DefineFunction(std::string name, Class* ret_type, bool priv);
+        Function* GetFunction(std::string name);
+
+        Function* GetFunctionAt(word index) const{
+            return functions_[index];
+        }
 
         static Class* OBJECT;
         static Class* STRING;
         static Class* BOOLEAN;
         static Class* INTEGER;
         static Class* DOUBLE;
+        static Class* VOID;
+    };
+
+    class AstNode;
+    class SequenceNode;
+
+    class Function : public Object{
+    private:
+        std::string name_;
+        Class* result_type_;
+        Class* owner_;
+        int mods_;
+        MemoryRegion code_;
+        SequenceNode* ast_;
+    public:
+        Function(std::string name, int mods, Class* owner, Class* ret_type);
+
+        std::string GetName() const{
+            return name_;
+        }
+
+        Class* GetReturnType() const{
+            return result_type_;
+        }
+
+        SequenceNode* GetAst() const{
+            return ast_;
+        }
+
+        void AddAst(AstNode* node);
+
+        virtual std::string ToString(){
+            std::stringstream stream;
+            stream << "Function " << name_;
+            return stream.str();
+        }
     };
 
     class Field : public Object{
@@ -272,6 +321,7 @@ namespace Eschelle{
                 classes_(10),
                 location_(loc){
             AddClass(Class::STRING);
+            AddClass(Class::INTEGER);
         }
 
         Class* FindClass(std::string name) const{

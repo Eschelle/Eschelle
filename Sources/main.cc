@@ -63,5 +63,12 @@ main(int argc, char** argv){
     for(int i = 0; i < Test3->GetFieldCount(); i++){
         std::cout << "\t#" << i << ": " << Test3->GetFieldAt(i)->GetName() << " - " << Test3->GetFieldAt(i)->GetFieldType()->GetName() << std::endl;
     }
+    std::cout << "Functions: " << Test3->GetFunctionCount() << std::endl;
+    for(int i = 0; i < Test3->GetFunctionCount(); i++){
+        Function* func = Test3->GetFunctionAt(i);
+        std::cout << "\t#" << i << ": " << func->GetName() << " - " << func->GetReturnType()->GetName() << std::endl;
+        AstPrinter printer;
+        func->GetAst()->Visit(&printer);
+    }
     return 0;
 }

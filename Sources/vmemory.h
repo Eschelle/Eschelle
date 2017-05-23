@@ -17,6 +17,9 @@ namespace Eschelle{
             kReadExecute,
             kReadWriteExecute
         };
+        MemoryRegion():
+                size_(0),
+                ptr_(nullptr){}
         MemoryRegion(word size);
         MemoryRegion(void* ptr, uword size):
                 size_(size),

@@ -77,8 +77,8 @@ namespace Eschelle{
         }
 
         void ParseFields(Class* cls);
-        AstNode* ParseEnum();
-        AstNode* ParseStatement();
+        void ParseParameters(Function* func);
+        AstNode* ParseStatement(Class* cls, Function* func);
         AstNode* ParseBinaryExpr();
         AstNode* ParseUnaryExpr();
         Class* ParseDefinition();
