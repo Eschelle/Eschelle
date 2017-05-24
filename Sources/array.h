@@ -37,6 +37,10 @@ namespace Eschelle{
             Resize(Length() + 1);
             Last() = value;
         }
+
+        void Clear(){
+            length_ = 0;
+        }
     private:
         word length_;
         word capacity_;

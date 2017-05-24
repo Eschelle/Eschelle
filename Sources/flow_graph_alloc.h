@@ -2,7 +2,7 @@
 #define ESCHELLE_CONTROL_FLOW_ALLOC_H
 
 #include "common.h"
-#include "control_flow.h"
+#include "flow_graph.h"
 #include "irep.h"
 
 namespace Eschelle{

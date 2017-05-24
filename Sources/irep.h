@@ -33,6 +33,22 @@ namespace Eschelle{
                 next_(nullptr),
                 prev_(nullptr){}
 
+        Instruction* GetNext() const{
+            return next_;
+        }
+
+        void SetNext(Instruction* next){
+            next_ = next;
+        }
+
+        Instruction* GetPrevious() const{
+            return prev_;
+        }
+
+        void SetPrevious(Instruction* prev){
+            prev_ = prev;
+        }
+
 #define DECLARE_INSTRUCTION_TYPECHECK(Name) \
         bool Is##Name(){ return As##Name() != nullptr; } \
         virtual Name##Instr* As##Name(){ return nullptr; }
@@ -42,15 +58,25 @@ namespace Eschelle{
 
     class BlockEntryInstr : public Instruction{
     private:
+        word preorder_num_;
+        word postorder_num_;
+        word offset_;
         word start_pos_;
         word end_pos_;
         Instruction* last_;
+        Array<BlockEntryInstr*> dominated_;
+        BlockEntryInstr* dominator_;
     protected:
         BlockEntryInstr():
+                preorder_num_(0),
+                postorder_num_(0),
+                offset_(0),
                 start_pos_(0),
                 end_pos_(0),
+                dominator_(nullptr),
+                dominated_(10),
                 last_(nullptr){}
-
+    public:
         void SetStartPos(word pos){
             start_pos_ = pos;
         }
@@ -66,19 +92,90 @@ namespace Eschelle{
         word GetEndPos() const{
             return end_pos_;
         }
+
+        word GetPreorderNum() const{
+            return preorder_num_;
+        }
+
+        void SetPreorderNum(word preorder){
+            preorder_num_ = preorder;
+        }
+
+        word GetPostorderNum() const{
+            return postorder_num_;
+        }
+
+        void SetPostorderNum(word postorder){
+            postorder_num_ = postorder;
+        }
+
+        void SetLastInstruction(Instruction* last){
+            last_ = last;
+        }
+
+        virtual word GetPredecessorsCount() const = 0;
+        virtual void ClearPredecessors() = 0;
+        virtual void AddPredecessor(BlockEntryInstr* predecessor) = 0;
+        virtual BlockEntryInstr* GetPredecessorAt(word index) const = 0;
+
+        bool DiscoverBlocks(BlockEntryInstr* predecessor, Array<BlockEntryInstr*>* preorder, Array<word>* parent);
     };
 
     class GraphEntryInstr : public BlockEntryInstr{
     private:
         Function* function_;
+        TargetEntryInstr* block_;
+        word entry_count_;
+        word spill_slot_count_;
+        word fixed_slot_count_;
+        Array<Definition*> definitions_;
     public:
-        GraphEntryInstr(Function* function):
+        GraphEntryInstr(Function* function, TargetEntryInstr* target):
+                block_(target),
+                entry_count_(0),
+                spill_slot_count_(0),
+                fixed_slot_count_(0),
+                definitions_(10),
                 function_(function){}
+
+        Array<Definition*> GetDefinitions() const{
+            return definitions_;
+        }
+
+        void ClearPredecessors(){}
+        void AddPredecessor(BlockEntryInstr* block){}
+
+        BlockEntryInstr* GetPredecessorAt(word index) const{
+            return nullptr;
+        }
+
+        word GetPredecessorsCount() const{
+            return 0;
+        }
     };
 
     class TargetEntryInstr : public BlockEntryInstr{
+    private:
+        BlockEntryInstr* predecessor_;
     public:
-        TargetEntryInstr(){}
+        TargetEntryInstr():
+                predecessor_(nullptr){}
+
+        void AddPredecessor(BlockEntryInstr* block){
+            predecessor_ = block;
+        }
+
+        BlockEntryInstr* GetPredecessorAt(word index) const{
+            return predecessor_;
+        }
+
+        void ClearPredecessors(){
+            predecessor_ = nullptr;
+        }
+
+        word GetPredecessorsCount() const{
+            return 1;
+        }
     };
 
     class Definition;
@@ -144,6 +241,40 @@ namespace Eschelle{
 
         void SetUseIndex(word index){
             use_index_ = index;
+        }
+    };
+
+    class Definition : public Instruction{
+    private:
+        word temp_index_;
+        word ssa_temp_index_;
+    public:
+        void SetSSATempIndex(word index){
+            ssa_temp_index_ = index;
+        }
+
+        word GetSSATempIndex() const{
+            return ssa_temp_index_;
+        }
+
+        void SetTempIndex(word index){
+            temp_index_ = index;
+        }
+
+        word GetTempIndex() const{
+            return temp_index_;
+        }
+    };
+
+    class ConstantInstr : public Definition{
+    private:
+        Instance* value_;
+    public:
+        ConstantInstr(Instance* value):
+                value_(value){}
+
+        Instance* GetValue() const{
+            return value_;
         }
     };
 }
