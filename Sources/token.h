@@ -13,7 +13,8 @@ namespace Eschelle{
     V(kNIL, "nil") \
     V(kVAR, "var") \
     V(kFUNC, "func") \
-    V(kPROTO, "proto")
+    V(kPROTO, "proto") \
+    V(kOBJECT, "object")
 
 #define FOR_EACH_TOKEN_SYM(V) \
     V(kEQUALS, "=") \

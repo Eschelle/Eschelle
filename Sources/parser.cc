@@ -240,6 +240,65 @@ namespace Eschelle{
                     private_ = true;
                     break;
                 }
+                case kOBJECT:{
+                    EXPECT(kIDENTIFIER);
+                    std::string obj_ident = next->GetText();
+
+                    Class* parent = Class::OBJECT;
+                    _o_entry:
+                        switch((CONSUME)->GetKind()){
+                            case kLBRACE:{
+                                result = new Class(obj_ident, (private_ ? kPrivate|kFinal : kFinal), parent, kObjectClass);
+                                private_ = false;
+                                break;
+                            }
+                            case kEXTENDS:{
+                                EXPECT(kIDENTIFIER);
+                                parent = code_->FindClass(next->GetText());
+                                goto _o_entry;
+                            }
+                            default: UNEXPECTED;
+                        }
+
+                    do{
+                        switch((CONSUME)->GetKind()){
+                            case kVAR:{
+                                Array<FieldDesc*>* fields = ParseFields(true);
+                                for(int i = 0; i < fields->Length(); i++){
+                                    if(result->GetField((*fields)[i]->name) != nullptr){
+                                        std::cerr << "Unable to add field " << (*fields)[i]->name << std::endl;
+                                        getchar();
+                                        abort();
+                                    }
+
+                                    Field* field = result->DefineStaticField((*fields)[i]->name, (*fields)[i]->type, private_);
+                                    if((*fields)[i]->value != nullptr) result->GetConstructor()->AddAst(new StoreStaticFieldNode(field, (*fields)[i]->value));
+                                }
+                                break;
+                            }
+                            case kFUNC:{
+                                EXPECT(kIDENTIFIER);
+                                std::string ident = next->GetText();
+
+                                Class* ret_type = Class::VOID;
+                                Function* func = result->DefineFunction(ident, ret_type, private_);
+
+                                EXPECT(kLPAREN);
+                                ParseParameters(func);
+                                EXPECT(kLBRACE);
+                                do{
+                                    ParseStatement(result, func);
+                                } while(PeekToken()->GetKind() != kRBRACE);
+                                EXPECT(kRBRACE);
+                                break;
+                            }
+                            case kRBRACE:{
+                                return result;
+                            }
+                            default: UNEXPECTED;
+                        }
+                    } while(true);
+                }
                 case kPROTO:{
                     EXPECT(kIDENTIFIER);
                     std::string cls_ident = next->GetText();
@@ -258,10 +317,8 @@ namespace Eschelle{
                     do{
                         switch((CONSUME)->GetKind()){
                             case kVAR:{
-                                std::cout << "Parsing fields" << std::endl;
                                 Array<FieldDesc*>* fields = ParseFields(false);
                                 for(int i = 0; i < fields->Length(); i++){
-                                    std::cout << "Adding field " << (*fields)[i]->name << std::endl;
                                     if(result->GetField((*fields)[i]->name) != nullptr){
                                         std::cerr << "Unable to add field '" << (*fields)[i]->name << "'" << std::endl;
                                         getchar();

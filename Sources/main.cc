@@ -40,5 +40,6 @@ main(int argc, char** argv){
 
     std::cout << *(code->FindClass("Modifier")) << std::endl;
     std::cout << *(code->FindClass("Field")) << std::endl;
+    std::cout << *(code->FindClass("Main")) << std::endl;
     return 0;
 }
