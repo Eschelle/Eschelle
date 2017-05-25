@@ -1,0 +1,18 @@
+enum Modifier{
+    kPrivate,
+    kStatic,
+    kNone
+}
+
+class Field{
+    var mod: Modifier = 0;
+    var name: String = "This is a string";
+}
+
+object Main{
+    func main(){
+        var ten: Int = 10,
+            twenty: Int = 10 * 2;
+        var field: Field = 0;
+    }
+}
