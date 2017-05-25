@@ -50,6 +50,14 @@ namespace Eschelle{
             stream_ << std::endl;
         }
 
+        void VisitStoreInstanceField(StoreInstanceFieldNode* node){
+            Adjust();
+            stream_ << "SI\t" << node->GetField()->GetName();
+            stream_ << "[" << node->GetField()->GetFieldType()->GetName() << "] := ";
+            node->VisitChildren(this);
+            stream_ << std::endl;
+        }
+
         void VisitStoreStaticField(StoreStaticFieldNode* node){
             Adjust();
             stream_ << "SS\t" << node->GetField()->GetName();

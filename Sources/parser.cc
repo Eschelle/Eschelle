@@ -30,6 +30,9 @@ namespace Eschelle{
             case kLIT_NUMBER:{
                 return new LiteralNode(new Int(atoi(next->GetText().c_str())));
             }
+            case kLIT_STRING:{
+                return new LiteralNode(new String(next->GetText()));
+            }
             default:{
                 UNEXPECTED;
             }
@@ -331,7 +334,7 @@ namespace Eschelle{
                                     }
                                     Field* f = result->DefineField((*fields)[i]->name, (*fields)[i]->type, private_);
                                     if((*fields)[i]->value != nullptr){
-                                        result->GetConstructor()->AddAst(new StoreStaticFieldNode(f, (*fields)[i]->value));
+                                        result->GetConstructor()->AddAst(new StoreInstanceFieldNode(f, (*fields)[i]->value));
                                     }
                                 }
                                 break;
@@ -365,7 +368,7 @@ namespace Eschelle{
 
                     bool defs_done = false;
 
-                    result = new Class(identifier, mods, Class::OBJECT);
+                    result = new Class(identifier, mods, Class::OBJECT, kEnumClass);
                     private_ = false;
                     EXPECT(kLBRACE);
                     while((CONSUME)->GetKind() != kRBRACE){

@@ -24,6 +24,8 @@ namespace Eschelle{
     FOR_EACH_ABSTRACT_INSTRUCTION(FORWARD_DECLARE)
 #undef FORWARD_DECLARE
 
+    class Definition;
+
     class Instruction{
     private:
         Instruction* next_;
@@ -177,8 +179,6 @@ namespace Eschelle{
             return 1;
         }
     };
-
-    class Definition;
 
     class Value{
     private:

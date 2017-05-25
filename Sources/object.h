@@ -80,7 +80,7 @@ namespace Eschelle{
                 functions_(0xA),
                 type_(type),
                 super_(super){
-            ctor_ = DefineFunction(name, Class::VOID, false);
+            if(type != kProtoClass) ctor_ = DefineFunction(name, Class::VOID, false);
         }
 
         virtual std::string ToString(){

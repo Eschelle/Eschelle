@@ -38,11 +38,7 @@ main(int argc, char** argv){
     Parser* parser = new Parser();
     CodeUnit* code = parser->Parse(std::string(argv[1]));
 
-    Class* cls1 = code->FindClass("Test");
-    std::cout << *cls1 << std::endl;
-    Class* cls2 = code->FindClass("Test2");
-    std::cout << *cls2 << std::endl;
-    Class* cls3 = code->FindClass("Test3");
-    std::cout << *cls3 << std::endl;
+    std::cout << *(code->FindClass("Modifier")) << std::endl;
+    std::cout << *(code->FindClass("Field")) << std::endl;
     return 0;
 }

@@ -23,8 +23,7 @@ namespace Eschelle{
         postorder_.Clear();
         reverse_postorder_.Clear();
 
-        Array<BlockTraversalState&> block_stack(10);
+        Array<BlockTraversalState> block_stack(10);
         graph_entry_->DiscoverBlocks(nullptr, &preorder_, &parent_);
-        block_stack.Add(BlockTraversalState(graph_entry_, graph_entry_->SuccessorCount() - 1))
     }
 }

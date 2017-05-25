@@ -15,7 +15,9 @@ namespace Eschelle{
     V(StoreStaticField) \
     V(LoadStaticField) \
     V(StoreLocal) \
-    V(LoadLocal)
+    V(LoadLocal) \
+    V(StoreInstanceField) \
+    V(LoadInstanceField)
 
 #define DECLARE_COMMON_NODE_FUNCTIONS(BaseName) \
     virtual const char* Name(){ return #BaseName; } \
@@ -139,6 +141,46 @@ namespace Eschelle{
         void VisitChildren(AstNodeVisitor* vis){}
 
         DECLARE_COMMON_NODE_FUNCTIONS(Literal)
+    };
+
+    class StoreInstanceFieldNode : public AstNode{
+    private:
+        Field* field_;
+        AstNode* value_;
+    public:
+        StoreInstanceFieldNode(Field* field, AstNode* value):
+                field_(field),
+                value_(value){}
+
+        Field* GetField() const{
+            return field_;
+        }
+
+        AstNode* GetValue() const{
+            return value_;
+        }
+
+        void VisitChildren(AstNodeVisitor* vis){
+            GetValue()->Visit(vis);
+        }
+
+        DECLARE_COMMON_NODE_FUNCTIONS(StoreInstanceField);
+    };
+
+    class LoadInstanceFieldNode : public AstNode{
+    private:
+        Field* field_;
+    public:
+        LoadInstanceFieldNode(Field* field):
+                field_(field){}
+
+        Field* GetField() const{
+            return field_;
+        }
+
+        void VisitChildren(AstNodeVisitor* vis){}
+
+        DECLARE_COMMON_NODE_FUNCTIONS(LoadInstanceField);
     };
 
     class StoreStaticFieldNode : public AstNode{
