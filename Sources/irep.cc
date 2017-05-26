@@ -25,8 +25,12 @@ namespace Eschelle{
         preorder->Add(this);
 
         Instruction* next = this;
-        while(next != nullptr) next = next->GetNext();
+        while(next->GetNext() != nullptr) next = next->GetNext();
         SetLastInstruction(next);
         return true;
+    }
+
+    BlockEntryInstr* GraphEntryInstr::SuccessorAt(word index) const{
+        return block_;
     }
 }

@@ -33,6 +33,12 @@ namespace Eschelle{
             return operator[](length_ - 1);
         }
 
+        T& Pop() {
+            T& result = Last();
+            length_--;
+            return result;
+        }
+
         void Add(const T& value){
             Resize(Length() + 1);
             Last() = value;
@@ -40,6 +46,10 @@ namespace Eschelle{
 
         void Clear(){
             length_ = 0;
+        }
+
+        bool IsEmpty() const{
+            return Length() == 0;
         }
     private:
         word length_;

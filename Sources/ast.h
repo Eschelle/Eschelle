@@ -53,6 +53,14 @@ namespace Eschelle{
         virtual const char* Name() = 0;
         virtual void Visit(AstNodeVisitor* vis) = 0;
         virtual void VisitChildren(AstNodeVisitor* vis) = 0;
+
+        virtual bool IsConstantExpr() const{
+            return false;
+        }
+
+        virtual Instance* EvalConstantExpr() const{
+            return nullptr;
+        }
     };
 
     class SequenceNode : public AstNode{
@@ -62,10 +70,7 @@ namespace Eschelle{
     public:
         SequenceNode():
                 children_(10),
-                scope_(new LocalScope()){}
-        SequenceNode(LocalScope* parent):
-                children_(10),
-                scope_(new LocalScope(parent)){}
+                scope_(nullptr){}
 
         LocalScope* GetScope() const{
             return scope_;
@@ -73,6 +78,10 @@ namespace Eschelle{
 
         void Add(AstNode* node){
             children_.Add(node);
+        }
+
+        void SetScope(LocalScope* scope){
+            scope_ = scope;
         }
 
         void VisitChildren(AstNodeVisitor* vis){
@@ -117,11 +126,20 @@ namespace Eschelle{
     };
 
     class ReturnNode : public AstNode{
+    private:
+        AstNode* value_;
     public:
-        ReturnNode(){}
+        ReturnNode(AstNode* value):
+                value_(value){}
         ~ReturnNode(){}
 
-        void VisitChildren(AstNodeVisitor* vis){}
+        AstNode* GetValue() const{
+            return value_;
+        }
+
+        void VisitChildren(AstNodeVisitor* vis){
+            GetValue()->Visit(vis);
+        }
 
         DECLARE_COMMON_NODE_FUNCTIONS(Return)
     };

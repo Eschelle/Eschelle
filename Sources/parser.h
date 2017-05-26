@@ -12,6 +12,7 @@ namespace Eschelle{
         Token* peek_;
         LocalScope* scope_;
         CodeUnit* code_;
+        Class* class_;
         bool private_;
 
         struct LocalDesc{
@@ -106,7 +107,7 @@ namespace Eschelle{
         }
 
         void ParseParameters(Function* func);
-        void ParseStatement(Class* cls, Function* func);
+        void ParseStatement(Function* func);
         Array<FieldDesc*>* ParseFields(bool parse_init);
         Array<LocalDesc*>* ParseLocals();
         AstNode* ParseBinaryExpr();
@@ -117,8 +118,11 @@ namespace Eschelle{
         Token* PeekToken();
     public:
         Parser():
+                class_(nullptr),
+                code_(nullptr),
                 file_(nullptr),
                 peek_(nullptr),
+                private_(false),
                 scope_(nullptr){}
         ~Parser(){}
 

@@ -14,7 +14,8 @@ namespace Eschelle{
     V(kVAR, "var") \
     V(kFUNC, "func") \
     V(kPROTO, "proto") \
-    V(kOBJECT, "object")
+    V(kOBJECT, "object") \
+    V(kRETURN, "return")
 
 #define FOR_EACH_TOKEN_SYM(V) \
     V(kEQUALS, "=") \

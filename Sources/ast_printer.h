@@ -65,6 +65,31 @@ namespace Eschelle{
             node->VisitChildren(this);
             stream_ << std::endl;
         }
+
+        void VisitReturn(ReturnNode* node){
+            Adjust();
+            stream_ << "return ";
+            node->VisitChildren(this);
+            stream_ << std::endl;
+        }
+
+        void VisitLoadLocal(LoadLocalNode* node){
+            Adjust();
+            stream_ << "LL\t" << node->GetLocal()->GetName()
+                    << "[" << node->GetLocal()->GetType()->GetName() << "]";
+        }
+
+        void VisitLoadInstanceField(LoadInstanceFieldNode* node){
+            Adjust();
+            stream_ << "LI\t" << node->GetField()->GetName()
+                    << "[" << node->GetField()->GetFieldType()->GetName() << "]";
+        }
+
+        void VisitLoadStaticField(LoadStaticFieldNode* node){
+            Adjust();
+            stream_ << "LS\t" << node->GetField()->GetName()
+                    << "[" << node->GetField()->GetFieldType()->GetName() << "]";
+        }
     };
 }
 

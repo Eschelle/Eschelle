@@ -141,6 +141,7 @@ namespace Eschelle{
 
     class AstNode;
     class SequenceNode;
+    class LocalScope;
 
     class Function : public Object{
     private:
@@ -168,6 +169,8 @@ namespace Eschelle{
         SequenceNode* GetAst() const{
             return ast_;
         }
+
+        void AttachScope(LocalScope* scope);
 
         void AddAst(AstNode* node);
 

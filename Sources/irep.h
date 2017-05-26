@@ -51,6 +51,9 @@ namespace Eschelle{
             prev_ = prev;
         }
 
+        virtual word SuccessorCount() const = 0;
+        virtual BlockEntryInstr* SuccessorAt(word index) const = 0;
+
 #define DECLARE_INSTRUCTION_TYPECHECK(Name) \
         bool Is##Name(){ return As##Name() != nullptr; } \
         virtual Name##Instr* As##Name(){ return nullptr; }
@@ -68,6 +71,8 @@ namespace Eschelle{
         Instruction* last_;
         Array<BlockEntryInstr*> dominated_;
         BlockEntryInstr* dominator_;
+
+        friend class FlowGraph;
     protected:
         BlockEntryInstr():
                 preorder_num_(0),
@@ -115,6 +120,10 @@ namespace Eschelle{
             last_ = last;
         }
 
+        Instruction* GetLastInstruction () const{
+            return last_;
+        }
+
         virtual word GetPredecessorsCount() const = 0;
         virtual void ClearPredecessors() = 0;
         virtual void AddPredecessor(BlockEntryInstr* predecessor) = 0;
@@ -154,6 +163,12 @@ namespace Eschelle{
         word GetPredecessorsCount() const{
             return 0;
         }
+
+        word SuccessorCount() const{
+            return 1;
+        }
+
+        BlockEntryInstr* SuccessorAt(word index) const;
     };
 
     class TargetEntryInstr : public BlockEntryInstr{
@@ -177,6 +192,14 @@ namespace Eschelle{
 
         word GetPredecessorsCount() const{
             return 1;
+        }
+
+        word SuccessorCount() const{
+            return 0;
+        }
+
+        BlockEntryInstr* SuccessorAt(word index) const{
+            return nullptr;
         }
     };
 
@@ -263,6 +286,14 @@ namespace Eschelle{
 
         word GetTempIndex() const{
             return temp_index_;
+        }
+
+        word SuccessorCount() const{
+            return 0;
+        }
+
+        BlockEntryInstr* GetSuccessorAt(word index) const{
+            return nullptr;
         }
     };
 
