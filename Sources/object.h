@@ -101,12 +101,17 @@ namespace Eschelle{
             return (mods_ & kPrivate) == kPrivate;
         }
 
+        bool IsFinal() const{
+            return (mods_ & kFinal) == kFinal;
+        }
+
         word GetAllocationSize();
 
         word GetFieldCount() const{
             return fields_.Length();
         }
 
+        Field* CreateField(std::string name, Class* type, bool priv = false);
         Field* DefineStaticField(std::string name, Class* type, bool priv);
         Field* DefineField(std::string name, Class* type, bool priv);
         Field* GetField(std::string name);
@@ -205,6 +210,9 @@ namespace Eschelle{
                 owner_(owner),
                 mods_(mods){}
 
+        AstNode* CreateStore(AstNode* value);
+        AstNode* CreateLoad();
+
         std::string GetName() const{
             return name_;
         }
@@ -219,6 +227,10 @@ namespace Eschelle{
 
         bool IsFinal() const{
             return (mods_ & kFinal) == kFinal;
+        }
+
+        bool IsPrivate() const{
+            return (mods_ & kPrivate) == kPrivate;
         }
 
         word GetOffset(){
@@ -353,6 +365,8 @@ namespace Eschelle{
                 location_(loc){
             AddClass(Class::STRING);
             AddClass(Class::INTEGER);
+            AddClass(Class::DOUBLE);
+            AddClass(Class::BOOLEAN);
         }
 
         Class* FindClass(std::string name) const{
@@ -360,6 +374,14 @@ namespace Eschelle{
                 if(classes_[i]->GetName() == name) return classes_[i];
             }
             return nullptr;
+        }
+
+        word GetClassesSize() const{
+            return classes_.Length();
+        }
+
+        Class* GetClassAt(word index) const{
+            return classes_[index];
         }
     };
 

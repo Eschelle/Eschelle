@@ -44,7 +44,7 @@ namespace Eschelle{
 
         void VisitStoreLocal(StoreLocalNode* node){
             Adjust();
-            stream_ << "SL\t" << node->GetLocal()->GetName();
+            stream_ << "SL " << node->GetLocal()->GetName();
             stream_ << "[" << node->GetLocal()->GetType()->GetName() << "] := ";
             node->VisitChildren(this);
             stream_ << std::endl;
@@ -52,7 +52,7 @@ namespace Eschelle{
 
         void VisitStoreInstanceField(StoreInstanceFieldNode* node){
             Adjust();
-            stream_ << "SI\t" << node->GetField()->GetName();
+            stream_ << "SI " << node->GetField()->GetName();
             stream_ << "[" << node->GetField()->GetFieldType()->GetName() << "] := ";
             node->VisitChildren(this);
             stream_ << std::endl;
@@ -60,7 +60,7 @@ namespace Eschelle{
 
         void VisitStoreStaticField(StoreStaticFieldNode* node){
             Adjust();
-            stream_ << "SS\t" << node->GetField()->GetName();
+            stream_ << "SS " << node->GetField()->GetName();
             stream_ << "[" << node->GetField()->GetFieldType()->GetName() << "] := ";
             node->VisitChildren(this);
             stream_ << std::endl;
@@ -75,19 +75,19 @@ namespace Eschelle{
 
         void VisitLoadLocal(LoadLocalNode* node){
             Adjust();
-            stream_ << "LL\t" << node->GetLocal()->GetName()
+            stream_ << "LL " << node->GetLocal()->GetName()
                     << "[" << node->GetLocal()->GetType()->GetName() << "]";
         }
 
         void VisitLoadInstanceField(LoadInstanceFieldNode* node){
             Adjust();
-            stream_ << "LI\t" << node->GetField()->GetName()
+            stream_ << "LI " << node->GetField()->GetName()
                     << "[" << node->GetField()->GetFieldType()->GetName() << "]";
         }
 
         void VisitLoadStaticField(LoadStaticFieldNode* node){
             Adjust();
-            stream_ << "LS\t" << node->GetField()->GetName()
+            stream_ << "LS " << node->GetField()->GetName()
                     << "[" << node->GetField()->GetFieldType()->GetName() << "]";
         }
     };

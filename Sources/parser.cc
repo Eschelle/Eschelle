@@ -26,11 +26,19 @@ namespace Eschelle{
         Token* next;
         switch((CONSUME)->GetKind()){
             case kLIT_NUMBER:{
-                return new LiteralNode(new Int(atoi(next->GetText().c_str())));
+                std::string txt = next->GetText();
+                if(txt.find('.', 0) > 0){
+                    return new LiteralNode(new Double(atof(txt.c_str())));
+                } else{
+                    return new LiteralNode(new Int(atoi(txt.c_str())));
+                }
+                break;
             }
             case kLIT_STRING:{
                 return new LiteralNode(new String(next->GetText()));
             }
+            case kTRUE: return new LiteralNode(Bool::TRUE);
+            case kFALSE: return new LiteralNode(Bool::FALSE);
             case kIDENTIFIER:{
                 std::string name = next->GetText();
                 LocalVariable* local = nullptr;
@@ -40,11 +48,7 @@ namespace Eschelle{
 
                 Field* field = nullptr;
                 if((field = class_->GetField(name)) != nullptr){
-                    if(field->IsStatic()){
-                        return new LoadStaticFieldNode(field);
-                    } else{
-                        return new LoadInstanceFieldNode(field);
-                    }
+                    return field->CreateLoad();
                 }
 
                 std::cerr << "Undeclared identifier '" << name << "'" << std::endl;
@@ -161,6 +165,26 @@ namespace Eschelle{
                 func->AddAst(new ReturnNode(ParseBinaryExpr()));
                 break;
             }
+            case kIDENTIFIER:{
+                std::string name = next->GetText();
+                EXPECT(kEQUALS);
+
+                LocalVariable* local = nullptr;
+                if(scope_->Lookup(name, &local)){
+                    func->AddAst(new StoreLocalNode(local, ParseBinaryExpr()));
+                    break;
+                }
+
+                Field* field = nullptr;
+                if((field = class_->GetField(name)) != nullptr){
+                    func->AddAst(field->CreateStore(ParseBinaryExpr()));
+                    break;
+                }
+
+                std::cerr << "Undeclared identifier '" << name << "'" << std::endl;
+                getchar();
+                abort();
+            }
             default:{
                 UNEXPECTED;
             }
@@ -201,50 +225,38 @@ namespace Eschelle{
             goto entry;
     }
 
-    Array<Parser::FieldDesc*>* Parser::ParseFields(bool parse_init){
-        Array<FieldDesc*>* fields = new Array<FieldDesc*>(10);
-
+    void Parser::ParseFields(){
         Token* next = nullptr;
-
         entry:
             EXPECT(kIDENTIFIER);
             std::string ident = next->GetText();
             EXPECT(kCOLON);
             EXPECT(kIDENTIFIER);
-            std::string type_ident = next->GetText();
-            Class* type_cls = code_->FindClass(type_ident);
+            Class* type_cls = code_->FindClass(next->GetText());
 
-            AstNode* value = nullptr;
+            Field* field = class_->CreateField(ident, type_cls, private_);
         exit_0:
             switch((CONSUME)->GetKind()){
-                case kCOMMA:{
-                    goto exit_1;
-                }
-                case kSEMICOLON:{
-                    fields->Add(new FieldDesc(ident, type_cls, value));
-                    return fields;
-                }
+                case kCOMMA: goto entry;
+                case kSEMICOLON: goto exit_1;
                 case kEQUALS:{
-                    if(!parse_init) UNEXPECTED;
-                    value = ParseBinaryExpr();
+                    class_->GetConstructor()->AddAst(field->CreateStore(ParseBinaryExpr()));
                     goto exit_0;
                 }
                 default: UNEXPECTED;
             }
         exit_1:
-            fields->Add(new FieldDesc(ident, type_cls, value));
-            goto entry;
+            private_ = false;
     }
 
     void Parser::ParseParameters(Function *func){
-        LocalScope* scope = func->GetAst()->GetScope();
-
         Token* next;
         while((CONSUME)->GetKind() != kRPAREN){
             switch(next->GetKind()){
                 case kIDENTIFIER:{
                     std::string ident = next->GetText();
                     EXPECT(kCOLON);
+                    EXPECT(kIDENTIFIER);
                     std::string type = next->GetText();
 
                     Class* type_cls = code_->FindClass(type);
@@ -256,21 +268,27 @@ namespace Eschelle{
                             UNEXPECTED;
                         }
                         param->SetConstantValue(expr->EvalConstantExpr());
+                    } else{
+                        DECONSUME;
                     }
 
-                    if(!scope->AddLocal(param)){
+                    if(!scope_->AddLocal(param)){
                         std::cerr << "Unable to add parameter: " << ident << std::endl;
                         getchar();
                         abort();
                     }
                     break;
                 }
+                case kRPAREN: return;
                 default: UNEXPECTED;
             }
         }
     }
 
     Class* Parser::ParseDefinition(){
+        scope_ = new LocalScope();
+
+
         Token* next;
         do{
             switch((CONSUME)->GetKind()){
@@ -305,18 +323,12 @@ namespace Eschelle{
 
                     do{
                         switch((CONSUME)->GetKind()){
+                            case kPRIVATE:{
+                                private_ = true;
+                                break;
+                            }
                             case kVAR:{
-                                Array<FieldDesc*>* fields = ParseFields(true);
-                                for(int i = 0; i < fields->Length(); i++){
-                                    if(class_->GetField((*fields)[i]->name) != nullptr){
-                                        std::cerr << "Unable to add field " << (*fields)[i]->name << std::endl;
-                                        getchar();
-                                        abort();
-                                    }
-
-                                    Field* field = class_->DefineStaticField((*fields)[i]->name, (*fields)[i]->type, private_);
-                                    if((*fields)[i]->value != nullptr) class_->GetConstructor()->AddAst(new StoreStaticFieldNode(field, (*fields)[i]->value));
-                                }
+                                ParseFields();
                                 break;
                             }
                             case kIDENTIFIER:{
@@ -326,6 +338,7 @@ namespace Eschelle{
 
                                 Class* ret_type = code_->FindClass(type_cls);
                                 Function* func = class_->DefineStaticFunction(name, ret_type, private_);
+                                private_ = false;
 
                                 EXPECT(kLPAREN);
                                 ParseParameters(func);
@@ -342,6 +355,7 @@ namespace Eschelle{
 
                                 Class* ret_type = Class::VOID;
                                 Function* func = class_->DefineStaticFunction(ident, ret_type, private_);
+                                private_ = false;
                                 func->AttachScope(scope_ = new LocalScope(scope_));
 
                                 EXPECT(kLPAREN);
@@ -380,17 +394,7 @@ namespace Eschelle{
                     do{
                         switch((CONSUME)->GetKind()){
                             case kVAR:{
-                                Array<FieldDesc*>* fields = ParseFields(false);
-                                for(int i = 0; i < fields->Length(); i++){
-                                    if(class_->GetField((*fields)[i]->name) != nullptr){
-                                        std::cerr << "Unable to add field '" << (*fields)[i]->name << "'" << std::endl;
-                                        getchar();
-                                        abort();
-                                    }
-
-                                    Field* field = class_->DefineStaticField((*fields)[i]->name, (*fields)[i]->type, private_);
-                                    if((*fields)[i]->value != nullptr) class_->GetConstructor()->AddAst(new StoreStaticFieldNode(field, (*fields)[i]->value));
-                                }
+                                ParseFields();
                                 break;
                             }
                             case kFUNC:{
@@ -399,6 +403,7 @@ namespace Eschelle{
 
                                 Class* ret_type = Class::VOID;
                                 Function* func = class_->DefineFunction(ident, ret_type, private_);
+                                private_ = false;
                                 func->AttachScope(scope_ = new LocalScope(scope_));
 
                                 EXPECT(kLPAREN);
@@ -415,6 +420,7 @@ namespace Eschelle{
 
                                 Class* ret_type = code_->FindClass(type);
                                 Function* func = class_->DefineFunction(name, ret_type, private_);
+                                private_ = false;
 
                                 EXPECT(kLPAREN);
                                 ParseParameters(func);
@@ -459,18 +465,7 @@ namespace Eschelle{
                                 break;
                             }
                             case kVAR:{
-                                Array<FieldDesc*>* fields = ParseFields(true);
-                                for(int i = 0; i < fields->Length(); i++){
-                                    if(class_->GetField((*fields)[i]->name) != nullptr){
-                                        std::cerr << "Unable to add field '" << (*fields)[i]->name << "'" << std::endl;
-                                        getchar();
-                                        abort();
-                                    }
-                                    Field* f = class_->DefineField((*fields)[i]->name, (*fields)[i]->type, private_);
-                                    if((*fields)[i]->value != nullptr){
-                                        class_->GetConstructor()->AddAst(new StoreInstanceFieldNode(f, (*fields)[i]->value));
-                                    }
-                                }
+                                ParseFields();
                                 break;
                             }
                             case kIDENTIFIER:{
@@ -480,6 +475,7 @@ namespace Eschelle{
 
                                 Class* ret_type = code_->FindClass(type);
                                 Function* func = class_->DefineFunction(ident, ret_type, private_);
+                                private_ = false;
 
                                 EXPECT(kLPAREN);
                                 ParseParameters(func);
@@ -496,6 +492,7 @@ namespace Eschelle{
 
                                 Class* ret_type = Class::VOID;
                                 Function* func = class_->DefineFunction(ident, ret_type, private_);
+                                private_ = false;
                                 func->AttachScope(scope_ = new LocalScope(scope_));
 
                                 EXPECT(kLPAREN);

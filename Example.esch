@@ -5,14 +5,26 @@ enum Modifier{
 }
 
 class Field{
-    var mod: Modifier = 0;
+    private var mod: Modifier = 0;
     var name: String = "This is a string";
+
+    String getName(y: String){
+        return name + y;
+    }
 }
 
 object Main{
+    private var x: Int = 10;
+    var f: Double = 3;
+    var d: Bool = true;
+
+    Int double(x: Int){
+        return x * x;
+    }
+
     func main(){
         var ten: Int = 10,
-            twenty: Int = 10 * 2;
+            twenty: Int = 10 * 2 * 100 * 10 / 10 - x;
         var field: Field = 0;
     }
 }

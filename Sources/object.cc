@@ -4,16 +4,40 @@
 #include "ast_printer.h"
 
 namespace Eschelle{
+    Field* Class::CreateField(std::string name, Class *type, bool priv){
+        return IsFinal() ?
+               DefineStaticField(name, type, priv) :
+               DefineField(name, type, priv);
+    }
+
     Field* Class::DefineField(std::string name, Class *type, bool priv){
-        Field* f = new Field(name, this, type, kNone);
+        Field* f = new Field(name, this, type, (priv ? kPrivate : kNone));
         fields_.Add(f);
         return f;
     }
 
     Field* Class::DefineStaticField(std::string name, Class* type, bool priv){
-        Field* f = new Field(name, this, type, kStatic);
+        int mods = kStatic;
+        if(priv) mods |= kPrivate;
+        Field* f = new Field(name, this, type, mods);
         fields_.Add(f);
         return f;
+    }
+
+    AstNode* Field::CreateStore(AstNode *value){
+        if(IsStatic()){
+            return new StoreStaticFieldNode(this, value);
+        } else{
+            return new StoreInstanceFieldNode(this, value);
+        }
+    }
+
+    AstNode* Field::CreateLoad(){
+        if(IsStatic()){
+            return new LoadStaticFieldNode(this);
+        } else{
+            return new LoadInstanceFieldNode(this);
+        }
     }
 
     Field* Class::GetField(std::string name){
@@ -27,8 +51,7 @@ namespace Eschelle{
     }
 
     Function* Class::DefineFunction(std::string name, Class *ret_type, bool priv){
-        int mods = (priv ? kPrivate : kNone);
-        Function* func = new Function(name, mods, this, ret_type);
+        Function* func = new Function(name, (priv ? kPrivate : kNone), this, ret_type);
         functions_.Add(func);
         return func;
     }
@@ -112,7 +135,18 @@ namespace Eschelle{
         stream << "Fields (" << cls.GetFieldCount() << "):" << std::endl;
         for(int i = 0; i < cls.GetFieldCount(); i++){
             Field* f = cls.GetFieldAt(i);
-            stream << "\t#" << i << ": " << f->GetName() << std::endl;
+            stream << "\t#" << i << ": " << f->GetName() << " ";
+            if(f->IsStatic() || f->IsFinal() || f->IsPrivate()) stream << "-";
+            if(f->IsStatic()){
+                stream << "S";
+            }
+            if(f->IsFinal()){
+                stream << "F";
+            }
+            if(f->IsPrivate()){
+                stream << "P";
+            }
+            stream << std::endl;
         }
         stream << std::endl;
         stream << "Functions (" << cls.GetFunctionCount() << "):" << std::endl;

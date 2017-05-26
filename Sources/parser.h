@@ -26,17 +26,6 @@ namespace Eschelle{
                     value(v){}
         };
 
-        struct FieldDesc{
-            std::string name;
-            Class* type;
-            AstNode* value;
-
-            FieldDesc(std::string n, Class* t, AstNode* v):
-                    name(n),
-                    type(t),
-                    value(v){}
-        };
-
         inline char Peek(){
             int c = getc(file_);
             ungetc(c, file_);
@@ -108,7 +97,7 @@ namespace Eschelle{
 
         void ParseParameters(Function* func);
         void ParseStatement(Function* func);
-        Array<FieldDesc*>* ParseFields(bool parse_init);
+        void ParseFields();
         Array<LocalDesc*>* ParseLocals();
         AstNode* ParseBinaryExpr();
         AstNode* ParseUnaryExpr();
