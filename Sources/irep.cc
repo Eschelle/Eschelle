@@ -24,7 +24,7 @@ namespace Eschelle{
         SetPreorderNum(preorder->Length());
         preorder->Add(this);
 
-        Instruction* next = this;
+        Instruction* next = SuccessorAt(0);
         while(next->GetNext() != nullptr) next = next->GetNext();
         SetLastInstruction(next);
         return true;

@@ -98,7 +98,7 @@ namespace Eschelle{
         void ParseParameters(Function* func);
         void ParseStatement(Function* func);
         void ParseFields();
-        Array<LocalDesc*>* ParseLocals();
+        void ParseLocals(Function* func);
         AstNode* ParseBinaryExpr();
         AstNode* ParseUnaryExpr();
         Class* ParseDefinition();

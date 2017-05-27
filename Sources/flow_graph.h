@@ -4,6 +4,7 @@
 #include "common.h"
 #include "object.h"
 #include "irep.h"
+#include "bit_vector.h"
 
 namespace Eschelle{
     class FlowGraph{
@@ -15,6 +16,8 @@ namespace Eschelle{
         Array<BlockEntryInstr*> preorder_;
         Array<BlockEntryInstr*> postorder_;
         Array<BlockEntryInstr*> reverse_postorder_;
+
+        void ComputeDominators(Array<BitVector*>* dominators);
     public:
         FlowGraph(Function* func, GraphEntryInstr* graph_entry):
                 current_ssa_temp_index_(0),
@@ -32,6 +35,10 @@ namespace Eschelle{
         void AllocSSAIndexes(Definition* defn){
             defn->SetSSATempIndex(AllocSSATempIndex());
             AllocSSATempIndex();
+        }
+
+        GraphEntryInstr* GetEntry() const{
+            return graph_entry_;
         }
 
         Definition* GetConstant(Instance* value);

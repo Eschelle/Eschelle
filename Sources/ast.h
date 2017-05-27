@@ -90,6 +90,14 @@ namespace Eschelle{
             }
         }
 
+        AstNode* GetChild(word index) const{
+            return children_[index];
+        }
+
+        word ChildrenSize() const{
+            return children_.Length();
+        }
+
         DECLARE_COMMON_NODE_FUNCTIONS(Sequence)
     };
 
@@ -146,13 +154,13 @@ namespace Eschelle{
 
     class LiteralNode : public AstNode{
     private:
-        Object* instance_;
+        Instance* instance_;
     public:
-        LiteralNode(Object* instance):
+        LiteralNode(Instance* instance):
             instance_(instance){}
         ~LiteralNode(){}
 
-        Object* GetLiteral() const{
+        Instance* GetLiteral() const{
             return instance_;
         }
 

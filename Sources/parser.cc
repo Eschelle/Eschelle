@@ -147,18 +147,7 @@ namespace Eschelle{
         switch((CONSUME)->GetKind()){
             case kSEMICOLON: return;
             case kVAR:{
-                Array<LocalDesc*>* locals = ParseLocals();
-                for(int i = 0; i < locals->Length(); i++){
-                    LocalVariable* local = new LocalVariable((*locals)[i]->type, (*locals)[i]->name);
-                    if(!func->GetAst()->GetScope()->AddLocal(local)){
-                        std::cerr << "Unable to add local " << (*locals)[i]->name << std::endl;
-                        getchar();
-                        abort();
-                    }
-                    if((*locals)[i]->value != nullptr){
-                        func->AddAst(new StoreLocalNode(local, (*locals)[i]->value));
-                    }
-                }
+                ParseLocals(func);
                 break;
             }
             case kRETURN:{
@@ -191,38 +180,33 @@ namespace Eschelle{
         }
     }
 
-    Array<Parser::LocalDesc*>* Parser::ParseLocals(){
-        Array<LocalDesc*>* locals = new Array<LocalDesc*>(10);
-
+    void Parser::ParseLocals(Function* func){
         Token* next = nullptr;
-
         entry:
             EXPECT(kIDENTIFIER);
             std::string ident = next->GetText();
             EXPECT(kCOLON);
             EXPECT(kIDENTIFIER);
-            std::string type_ident = next->GetText();
-            Class* type_cls = code_->FindClass(type_ident);
+            Class* type_cls = code_->FindClass(next->GetText());
 
-            AstNode* value = nullptr;
+            LocalVariable* local = new LocalVariable(type_cls, ident);
+            if(!scope_->AddLocal(local)){
+                std::cerr << "Cannot add local variable '" << local->GetName() << "'" << std::endl;
+                getchar();
+                abort();
+            }
         exit_0:
             switch((CONSUME)->GetKind()){
-                case kCOMMA:{
-                    goto exit_1;
-                }
-                case kSEMICOLON:{
-                    locals->Add(new LocalDesc(ident, type_cls, value));
-                    return locals;
-                }
+                case kCOMMA: goto entry;
+                case kSEMICOLON: goto exit_1;
                 case kEQUALS:{
-                    value = ParseBinaryExpr();
+                    func->AddAst(new StoreLocalNode(local, ParseBinaryExpr()));
                     goto exit_0;
                 }
                 default: UNEXPECTED;
             }
         exit_1:
-            locals->Add(new LocalDesc(ident, type_cls, value));
-            goto entry;
+            private_ = false;
     }
 
     void Parser::ParseFields(){
@@ -532,7 +516,7 @@ namespace Eschelle{
                                 }
                                 std::string name = next->GetText();
                                 Field* field = class_->DefineStaticField(name, class_, false);
-                                Object* ordinal = new Int(class_->GetFieldCount());
+                                Instance* ordinal = new Int(class_->GetFieldCount());
                                 class_->GetConstructor()->AddAst(new StoreStaticFieldNode(field, new LiteralNode(ordinal)));
                                 break;
                             }

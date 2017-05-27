@@ -1,6 +1,8 @@
 #include "object.h"
 #include "parser.h"
+#include "asm.h"
 #include "esch_vm.h"
+#include "flow_graph_builder.h"
 
 using namespace Eschelle;
 
@@ -23,8 +25,6 @@ main(int argc, char** argv){
     assm.movq(RAX, Immediate(10));
     assm.movq(RBX, Immediate(100));
     assm.addq(RAX, RBX);
-    assm.movq(RCX, Immediate(1000));
-    assm.addq(RAX, RCX);
     assm.ret();
 
     MemoryRegion* region;
@@ -35,6 +35,8 @@ main(int argc, char** argv){
     Function f = reinterpret_cast<Function>(region->Pointer());
 
     std::cout << f() << std::endl;
+
+    std::cout << getOneHundredAndTen() << std::endl;
     */
 
     std::string base(argv[1]);
@@ -47,6 +49,18 @@ main(int argc, char** argv){
     std::cout << *(code->FindClass("Modifier")) << std::endl;
     std::cout << *(code->FindClass("Field")) << std::endl;
     std::cout << *(code->FindClass("Main")) << std::endl;
+
+    Function* main = code->FindClass("Main")->GetFunction("main");
+    FlowGraphBuilder builder(main);
+    FlowGraph* graph = builder.BuildGraph();
+    // graph->DiscoverBlocks();
+    // graph->ComputeSSA(0);
+
+    Instruction* instr = graph->GetEntry()->SuccessorAt(0);
+    while(instr != nullptr){
+        std::cout << instr->Name() << std::endl;
+        instr = instr->GetNext();
+    }
 
     return 0;
 }

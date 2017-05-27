@@ -44,6 +44,10 @@ namespace Eschelle{
             return type_;
         }
 
+        Instance* GetConstantValue() const{
+            return value_;
+        }
+
         bool IsConstant() const{
             return value_ != nullptr;
         }
