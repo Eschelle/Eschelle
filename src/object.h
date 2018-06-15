@@ -1,0 +1,6 @@
+#ifndef ESCHELLE_OBJECT_H
+#define ESCHELLE_OBJECT_H
+
+
+
+#endif //ESCHELLE_OBJECT_H
