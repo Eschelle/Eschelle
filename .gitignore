@@ -1,0 +1,12 @@
+# Ignore Everything
+/*
+/*/
+
+# Except These
+!/.gitignore
+!/.gitattributes
+!/README.md
+!/LICENSE.md
+!/CMakeLists.txt
+!/src/
+!/test/

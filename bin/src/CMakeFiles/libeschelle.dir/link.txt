@@ -1,2 +1,0 @@
-/Library/Developer/CommandLineTools/usr/bin/ar qc liblibeschelle.a  CMakeFiles/libeschelle.dir/main.cc.o
-/Library/Developer/CommandLineTools/usr/bin/ranlib liblibeschelle.a
